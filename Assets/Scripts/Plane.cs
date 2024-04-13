@@ -1,8 +1,11 @@
+using F16_Sim;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Plane : MonoBehaviour {
+    const float poundsForceToNewtons = 4.44822f;
+
     [SerializeField]
     float maxHealth;
     [SerializeField]
@@ -18,20 +21,6 @@ public class Plane : MonoBehaviour {
 
     [Header("Lift")]
     [SerializeField]
-    float liftPower;
-    [SerializeField]
-    AnimationCurve liftAOACurve;
-    [SerializeField]
-    float inducedDrag;
-    [SerializeField]
-    AnimationCurve inducedDragCurve;
-    [SerializeField]
-    float rudderPower;
-    [SerializeField]
-    AnimationCurve rudderAOACurve;
-    [SerializeField]
-    AnimationCurve rudderInducedDragCurve;
-    [SerializeField]
     float flapsLiftPower;
     [SerializeField]
     float flapsAOABias;
@@ -39,14 +28,6 @@ public class Plane : MonoBehaviour {
     float flapsDrag;
     [SerializeField]
     float flapsRetractSpeed;
-
-    [Header("Steering")]
-    [SerializeField]
-    Vector3 turnSpeed;
-    [SerializeField]
-    Vector3 turnAcceleration;
-    [SerializeField]
-    AnimationCurve steeringCurve;
 
     [Header("Drag")]
     [SerializeField]
@@ -127,6 +108,8 @@ public class Plane : MonoBehaviour {
     bool cannonFiring;
     float cannonDebounceTimer;
     float cannonFiringTimer;
+
+    Engine engine;
 
     public float MaxHealth {
         get {
@@ -216,6 +199,8 @@ public class Plane : MonoBehaviour {
         missileLockDirection = Vector3.forward;
 
         Rigidbody.velocity = Rigidbody.rotation * new Vector3(0, 0, initialSpeed);
+
+        engine = new Engine();
     }
 
     public void SetThrottleInput(float input) {
@@ -307,8 +292,14 @@ public class Plane : MonoBehaviour {
         CalculateAngleOfAttack();
     }
 
-    void UpdateThrust() {
-        Rigidbody.AddRelativeForce(Throttle * maxThrust * Vector3.forward);
+    void UpdateThrust(float dt) {
+        engine.Throttle = Throttle;
+        engine.Mach = 0;
+        engine.Altitude = 0;
+
+        engine.Update(dt);
+
+        Rigidbody.AddRelativeForce(new Vector3(0, 0, engine.Thrust * poundsForceToNewtons));
     }
 
     void UpdateDrag() {
@@ -330,46 +321,6 @@ public class Plane : MonoBehaviour {
         var drag = coefficient.magnitude * lv2 * -lv.normalized;    //drag is opposite direction of velocity
 
         Rigidbody.AddRelativeForce(drag);
-    }
-
-    Vector3 CalculateLift(float angleOfAttack, Vector3 rightAxis, float liftPower, AnimationCurve aoaCurve, AnimationCurve inducedDragCurve) {
-        var liftVelocity = Vector3.ProjectOnPlane(LocalVelocity, rightAxis);    //project velocity onto YZ plane
-        var v2 = liftVelocity.sqrMagnitude;                                     //square of velocity
-
-        //lift = velocity^2 * coefficient * liftPower
-        //coefficient varies with AOA
-        var liftCoefficient = aoaCurve.Evaluate(angleOfAttack * Mathf.Rad2Deg);
-        var liftForce = v2 * liftCoefficient * liftPower;
-
-        //lift is perpendicular to velocity
-        var liftDirection = Vector3.Cross(liftVelocity.normalized, rightAxis);
-        var lift = liftDirection * liftForce;
-
-        //induced drag varies with square of lift coefficient
-        var dragForce = liftCoefficient * liftCoefficient;
-        var dragDirection = -liftVelocity.normalized;
-        var inducedDrag = dragDirection * v2 * dragForce * this.inducedDrag * inducedDragCurve.Evaluate(Mathf.Max(0, LocalVelocity.z));
-
-        return lift + inducedDrag;
-    }
-
-    void UpdateLift() {
-        if (LocalVelocity.sqrMagnitude < 1f) return;
-
-        float flapsLiftPower = FlapsDeployed ? this.flapsLiftPower : 0;
-        float flapsAOABias = FlapsDeployed ? this.flapsAOABias : 0;
-
-        var liftForce = CalculateLift(
-            AngleOfAttack + (flapsAOABias * Mathf.Deg2Rad), Vector3.right,
-            liftPower + flapsLiftPower,
-            liftAOACurve,
-            inducedDragCurve
-        );
-
-        var yawForce = CalculateLift(AngleOfAttackYaw, Vector3.up, rudderPower, rudderAOACurve, rudderInducedDragCurve);
-
-        Rigidbody.AddRelativeForce(liftForce);
-        Rigidbody.AddRelativeForce(yawForce);
     }
 
     void UpdateAngularDrag() {
@@ -421,38 +372,6 @@ public class Plane : MonoBehaviour {
         var error = targetVelocity - angularVelocity;
         var accel = acceleration * dt;
         return Mathf.Clamp(error, -accel, accel);
-    }
-
-    void UpdateSteering(float dt) {
-        var speed = Mathf.Max(0, LocalVelocity.z);
-        var steeringPower = steeringCurve.Evaluate(speed);
-
-        var gForceScaling = CalculateGLimiter(controlInput, turnSpeed * Mathf.Deg2Rad * steeringPower);
-
-        var targetAV = Vector3.Scale(controlInput, turnSpeed * steeringPower * gForceScaling);
-        var av = LocalAngularVelocity * Mathf.Rad2Deg;
-
-        var correction = new Vector3(
-            CalculateSteering(dt, av.x, targetAV.x, turnAcceleration.x * steeringPower),
-            CalculateSteering(dt, av.y, targetAV.y, turnAcceleration.y * steeringPower),
-            CalculateSteering(dt, av.z, targetAV.z, turnAcceleration.z * steeringPower)
-        );
-
-        Rigidbody.AddRelativeTorque(correction * Mathf.Deg2Rad, ForceMode.VelocityChange);    //ignore rigidbody mass
-
-        var correctionInput = new Vector3(
-            Mathf.Clamp((targetAV.x - av.x) / turnAcceleration.x, -1, 1),
-            Mathf.Clamp((targetAV.y - av.y) / turnAcceleration.y, -1, 1),
-            Mathf.Clamp((targetAV.z - av.z) / turnAcceleration.z, -1, 1)
-        );
-
-        var effectiveInput = (correctionInput + controlInput) * gForceScaling;
-
-        EffectiveInput = new Vector3(
-            Mathf.Clamp(effectiveInput.x, -1, 1),
-            Mathf.Clamp(effectiveInput.y, -1, 1),
-            Mathf.Clamp(effectiveInput.z, -1, 1)
-        );
     }
 
     public void TryFireMissile() {
@@ -540,26 +459,24 @@ public class Plane : MonoBehaviour {
         //calculate at start, to capture any changes that happened externally
         CalculateState(dt);
         CalculateGForce(dt);
-        UpdateFlaps();
+        //UpdateFlaps();
 
         //handle user input
         UpdateThrottle(dt);
 
         if (!Dead) {
             //apply updates
-            UpdateThrust();
-            UpdateLift();
-            UpdateSteering(dt);
+            UpdateThrust(dt);
         }
 
-        UpdateDrag();
-        UpdateAngularDrag();
+        //UpdateDrag();
+        //UpdateAngularDrag();
 
         //calculate again, so that other systems can read this plane's state
         CalculateState(dt);
 
         //update weapon state
-        UpdateWeapons(dt);
+        //UpdateWeapons(dt);
     }
 
     void OnCollisionEnter(Collision collision) {

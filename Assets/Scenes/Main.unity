@@ -149,7 +149,7 @@ Transform:
   m_GameObject: {fileID: 466408015}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.5, y: -1.25, z: -1}
+  m_LocalPosition: {x: -0.75, y: -1.25, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -375,6 +375,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7818057435441884713, guid: 0ce91553b0f624444bdcc02b62c934ab, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -543,7 +547,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 20000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -854,7 +858,7 @@ Transform:
   m_GameObject: {fileID: 1863654242}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: -1.25, z: -1}
+  m_LocalPosition: {x: 0.75, y: -1.25, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1028,45 +1032,10 @@ MonoBehaviour:
   throttleSpeed: 1
   gLimit: 0
   gLimitPitch: 0
-  liftPower: 0
-  liftAOACurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  inducedDrag: 0
-  inducedDragCurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  rudderPower: 0
-  rudderAOACurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  rudderInducedDragCurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
   flapsLiftPower: 0
   flapsAOABias: 0
   flapsDrag: 0
   flapsRetractSpeed: 0
-  turnSpeed: {x: 0, y: 0, z: 0}
-  turnAcceleration: {x: 0, y: 0, z: 0}
-  steeringCurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
   dragForward:
     serializedVersion: 2
     m_Curve: []
