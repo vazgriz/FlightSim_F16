@@ -31,6 +31,8 @@ public class PlaneHUD : MonoBehaviour {
     [SerializeField]
     Text gforceIndicator;
     [SerializeField]
+    Text machIndicator;
+    [SerializeField]
     Text altitude;
     [SerializeField]
     Bar healthBar;
@@ -174,6 +176,11 @@ public class PlaneHUD : MonoBehaviour {
     void UpdateGForce() {
         var gforce = plane.LocalGForce.y / 9.81f;
         gforceIndicator.text = string.Format("{0:0.0} G", gforce);
+    }
+
+    void UpdateMach() {
+        var mach = plane.Mach;
+        machIndicator.text = string.Format("{0:0.0} M", mach);
     }
 
     void UpdateAltitude() {
@@ -342,6 +349,7 @@ public class PlaneHUD : MonoBehaviour {
         if (Time.time > lastUpdateTime + (1f / updateRate)) {
             UpdateAOA();
             UpdateGForce();
+            UpdateMach();
             lastUpdateTime = Time.time;
         }
     }

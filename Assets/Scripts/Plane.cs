@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class Plane : MonoBehaviour {
     const float poundsForceToNewtons = 4.44822f;
+    const float metersToFeet = 3.28084f;
 
     [SerializeField]
     float maxHealth;
@@ -109,6 +110,7 @@ public class Plane : MonoBehaviour {
     float cannonDebounceTimer;
     float cannonFiringTimer;
 
+    AirDataComputer airDataComputer;
     Engine engine;
 
     public float MaxHealth {
@@ -151,6 +153,9 @@ public class Plane : MonoBehaviour {
     public float AngleOfAttack { get; private set; }
     public float AngleOfAttackYaw { get; private set; }
     public bool AirbrakeDeployed { get; private set; }
+
+    public float Mach { get; private set; }
+    public float AltitudeFeet { get; private set; }
 
     public bool FlapsDeployed {
         get {
@@ -200,6 +205,7 @@ public class Plane : MonoBehaviour {
 
         Rigidbody.velocity = Rigidbody.rotation * new Vector3(0, 0, initialSpeed);
 
+        airDataComputer = new AirDataComputer();
         engine = new Engine();
     }
 
@@ -283,6 +289,15 @@ public class Plane : MonoBehaviour {
         lastVelocity = Velocity;
     }
 
+    void UpdateAirData() {
+        float speed = LocalVelocity.z;  // m/s
+        float speedFeet = speed * metersToFeet;
+        AltitudeFeet = Rigidbody.position.y * metersToFeet;
+
+        var airData = airDataComputer.CalculateAirData(speedFeet, AltitudeFeet);
+        Mach = airData.altitudeMach;
+    }
+
     void CalculateState(float dt) {
         var invRotation = Quaternion.Inverse(Rigidbody.rotation);
         Velocity = Rigidbody.velocity;
@@ -290,12 +305,13 @@ public class Plane : MonoBehaviour {
         LocalAngularVelocity = invRotation * Rigidbody.angularVelocity;  //transform into local space
 
         CalculateAngleOfAttack();
+        UpdateAirData();
     }
 
     void UpdateThrust(float dt) {
         engine.Throttle = Throttle;
-        engine.Mach = 0;
-        engine.Altitude = 0;
+        engine.Mach = Mach;
+        engine.Altitude = AltitudeFeet;
 
         engine.Update(dt);
 
@@ -366,12 +382,6 @@ public class Plane : MonoBehaviour {
         }
 
         return 1;
-    }
-
-    float CalculateSteering(float dt, float angularVelocity, float targetVelocity, float acceleration) {
-        var error = targetVelocity - angularVelocity;
-        var accel = acceleration * dt;
-        return Mathf.Clamp(error, -accel, accel);
     }
 
     public void TryFireMissile() {
