@@ -1,0 +1,2 @@
+Assets/zion.raw filter=lfs diff=lfs merge=lfs -text
+Assets/Terrain.asset filter=lfs diff=lfs merge=lfs -text
