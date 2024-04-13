@@ -145,9 +145,9 @@ public class Plane : MonoBehaviour {
             health = Mathf.Clamp(value, 0, maxHealth);
 
             if (health <= MaxHealth * .5f && health > 0) {
-                damageEffect.SetActive(true);
+                //damageEffect.SetActive(true);
             } else {
-                damageEffect.SetActive(false);
+                //damageEffect.SetActive(false);
             }
 
             if (health == 0 && MaxHealth != 0 && !Dead) {
@@ -205,6 +205,8 @@ public class Plane : MonoBehaviour {
             landingGearDefaultMaterial = landingGear[0].sharedMaterial;
         }
 
+        FlapsDeployed = flapsDeployed;
+
         missileReloadTimers = new List<float>(hardpoints.Count);
 
         foreach (var h in hardpoints) {
@@ -247,8 +249,8 @@ public class Plane : MonoBehaviour {
         Dead = true;
         cannonFiring = false;
 
-        damageEffect.GetComponent<ParticleSystem>().Pause();
-        deathEffect.SetActive(true);
+        //damageEffect.GetComponent<ParticleSystem>().Pause();
+        //deathEffect.SetActive(true);
     }
 
     void UpdateThrottle(float dt) {
@@ -273,9 +275,9 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateFlaps() {
-        if (LocalVelocity.z > flapsRetractSpeed) {
-            FlapsDeployed = false;
-        }
+        //if (LocalVelocity.z > flapsRetractSpeed) {
+        //    FlapsDeployed = false;
+        //}
     }
 
     void CalculateAngleOfAttack() {
@@ -548,11 +550,6 @@ public class Plane : MonoBehaviour {
             UpdateThrust();
             UpdateLift();
             UpdateSteering(dt);
-        } else {
-            //align with velocity
-            Vector3 up = Rigidbody.rotation * Vector3.up;
-            Vector3 forward = Rigidbody.velocity.normalized;
-            Rigidbody.rotation = Quaternion.LookRotation(forward, up);
         }
 
         UpdateDrag();
