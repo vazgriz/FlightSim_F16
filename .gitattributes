@@ -1,2 +1,6 @@
 Assets/zion.raw filter=lfs diff=lfs merge=lfs -text
 Assets/Terrain.asset filter=lfs diff=lfs merge=lfs -text
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+AssetSources/f16.xcf filter=lfs diff=lfs merge=lfs -text
+AssetSources/F16.blend filter=lfs diff=lfs merge=lfs -text
