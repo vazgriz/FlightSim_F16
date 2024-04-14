@@ -366,9 +366,9 @@ public class Plane : MonoBehaviour {
         );
 
         var lav = new Vector3(
-            Utilities.ConvertAngle360To180(LocalAngularVelocity.z),
-            Utilities.ConvertAngle360To180(LocalAngularVelocity.x),
-            Utilities.ConvertAngle360To180(-LocalAngularVelocity.y)
+            Utilities.ConvertAngle360To180(LocalAngularVelocity.z * Mathf.Rad2Deg),
+            Utilities.ConvertAngle360To180(LocalAngularVelocity.x * Mathf.Rad2Deg),
+            Utilities.ConvertAngle360To180(-LocalAngularVelocity.y * Mathf.Rad2Deg)
         );
 
         // AerodynamicState uses aerospace conventions
@@ -378,12 +378,12 @@ public class Plane : MonoBehaviour {
         AerodynamicState currentState = new() {
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y),
             rotation = new Vector3(RollPitchYaw.z, RollPitchYaw.x, RollPitchYaw.y),
-            angularVelocity = lav,
+            angularVelocity = lav * Mathf.Deg2Rad,
             airData = airData,
             altitude = AltitudeFeet,
             alpha = AngleOfAttack * Mathf.Rad2Deg,
             beta = AngleOfAttackYaw * Mathf.Rad2Deg,
-            controlSurfaces = ControlSurfaces
+            controlSurfaces = new Vector3(ControlSurfaces.x, ControlSurfaces.y, -ControlSurfaces.z)
         };
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);
