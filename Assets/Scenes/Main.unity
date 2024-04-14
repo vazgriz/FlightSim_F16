@@ -773,11 +773,35 @@ MonoBehaviour:
     m_ActionId: 0d46f8f2-2f6f-4fe2-8623-427c869c3bde
     m_ActionName: Plane/Throttle
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1303602090}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: OnRollPitchInput
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 7173b259-7215-456e-ba7f-dba1aaad27e1
     m_ActionName: Plane/RollPitch
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1303602090}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: OnYawInput
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 56c160cd-3545-4284-abef-8d6eb62ab74c
     m_ActionName: Plane/Yaw
   - m_PersistentCalls:
@@ -1028,14 +1052,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   health: 100
-  maxThrust: 1
   throttleSpeed: 1
   gLimit: 0
   gLimitPitch: 0
+  inertiaTensor: {x: 55814, y: 63100, z: 9496}
   flapsLiftPower: 0
   flapsAOABias: 0
   flapsDrag: 0
   flapsRetractSpeed: 0
+  inputLag: 0.05
+  aileronRange: 21.5
+  elevatorRange: 25
+  rudderRange: 60
+  aileronSpeed: 80
+  elevatorSpeed: 60
+  rudderSpeed: 120
   dragForward:
     serializedVersion: 2
     m_Curve: []

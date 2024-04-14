@@ -119,4 +119,13 @@ public static class Utilities {
             return Mathf.Max(-b / (2f * a), 0f); //don't shoot back in time
         }
     }
+
+    public static float ConvertAngle360To180(float angle) {
+        //convert 0 - 360 range to -180 - 180
+        if (angle > 180) {
+            angle -= 360f;
+        }
+
+        return angle;
+    }
 }

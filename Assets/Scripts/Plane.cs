@@ -1,24 +1,25 @@
-using F16_Sim;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Playables;
 using UnityEngine;
 
 public class Plane : MonoBehaviour {
     const float poundsForceToNewtons = 4.44822f;
     const float metersToFeet = 3.28084f;
+    const float poundFootToNewtonMeter = 1.35582f;
 
     [SerializeField]
     float maxHealth;
     [SerializeField]
     float health;
     [SerializeField]
-    float maxThrust;
-    [SerializeField]
     float throttleSpeed;
     [SerializeField]
     float gLimit;
     [SerializeField]
     float gLimitPitch;
+    [SerializeField]
+    Vector3 inertiaTensor;
 
     [Header("Lift")]
     [SerializeField]
@@ -29,6 +30,22 @@ public class Plane : MonoBehaviour {
     float flapsDrag;
     [SerializeField]
     float flapsRetractSpeed;
+
+    [Header("Steering")]
+    [SerializeField]
+    float inputLag;
+    [SerializeField]
+    float aileronRange;
+    [SerializeField]
+    float elevatorRange;
+    [SerializeField]
+    float rudderRange;
+    [SerializeField]
+    float aileronSpeed;
+    [SerializeField]
+    float elevatorSpeed;
+    [SerializeField]
+    float rudderSpeed;
 
     [Header("Drag")]
     [SerializeField]
@@ -110,8 +127,13 @@ public class Plane : MonoBehaviour {
     float cannonDebounceTimer;
     float cannonFiringTimer;
 
+    AirData airData;
+
     AirDataComputer airDataComputer;
     Engine engine;
+    Aerodynamics aerodynamics;
+
+    public Vector3 ControlSurfaces { get; private set; }
 
     public float MaxHealth {
         get {
@@ -150,11 +172,17 @@ public class Plane : MonoBehaviour {
     public Vector3 LocalVelocity { get; private set; }
     public Vector3 LocalGForce { get; private set; }
     public Vector3 LocalAngularVelocity { get; private set; }
+    public Vector3 RollPitchYaw { get; private set; }
     public float AngleOfAttack { get; private set; }
     public float AngleOfAttackYaw { get; private set; }
     public bool AirbrakeDeployed { get; private set; }
 
-    public float Mach { get; private set; }
+    public float Mach {
+        get {
+            return airData.altitudeMach;
+        }
+    }
+
     public float AltitudeFeet { get; private set; }
 
     public bool FlapsDeployed {
@@ -207,6 +235,9 @@ public class Plane : MonoBehaviour {
 
         airDataComputer = new AirDataComputer();
         engine = new Engine();
+        aerodynamics = new Aerodynamics();
+
+        Rigidbody.inertiaTensor = inertiaTensor * poundFootToNewtonMeter;
     }
 
     public void SetThrottleInput(float input) {
@@ -294,8 +325,7 @@ public class Plane : MonoBehaviour {
         float speedFeet = speed * metersToFeet;
         AltitudeFeet = Rigidbody.position.y * metersToFeet;
 
-        var airData = airDataComputer.CalculateAirData(speedFeet, AltitudeFeet);
-        Mach = airData.altitudeMach;
+        airData = airDataComputer.CalculateAirData(speedFeet, AltitudeFeet);
     }
 
     void CalculateState(float dt) {
@@ -303,6 +333,13 @@ public class Plane : MonoBehaviour {
         Velocity = Rigidbody.velocity;
         LocalVelocity = invRotation * Velocity;  //transform world velocity into local space
         LocalAngularVelocity = invRotation * Rigidbody.angularVelocity;  //transform into local space
+
+        var euler = Rigidbody.rotation.eulerAngles;
+        RollPitchYaw = new Vector3(
+            Utilities.ConvertAngle360To180(euler.x),
+            Utilities.ConvertAngle360To180(euler.y),
+            Utilities.ConvertAngle360To180(euler.z)
+        );
 
         CalculateAngleOfAttack();
         UpdateAirData();
@@ -316,6 +353,48 @@ public class Plane : MonoBehaviour {
         engine.Update(dt);
 
         Rigidbody.AddRelativeForce(new Vector3(0, 0, engine.Thrust * poundsForceToNewtons));
+    }
+
+    void UpdateAerodynamics(float dt, float alpha, float beta) {
+        var current = ControlSurfaces;
+        var target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, rudderRange, aileronRange));
+
+        ControlSurfaces = new Vector3(
+            Utilities.MoveTo(current.x, target.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
+            Utilities.MoveTo(current.y, target.y, rudderSpeed,   dt, -rudderRange,   rudderRange),
+            Utilities.MoveTo(current.z, target.z, aileronSpeed,  dt, -aileronRange,  aileronRange)
+        );
+
+        // AerodynamicState uses aerospace conventions
+        // X = forward
+        // Y = right
+        // Z = down
+        AerodynamicState currentState = new() {
+            velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y),
+            rotation = RollPitchYaw,
+            angularVelocity = new Vector3(LocalAngularVelocity.z, LocalAngularVelocity.x, -LocalAngularVelocity.y) * Mathf.Rad2Deg,
+            airData = airData,
+            altitude = AltitudeFeet,
+            alpha = AngleOfAttack * Mathf.Rad2Deg,
+            beta = AngleOfAttackYaw * Mathf.Rad2Deg,
+            controlSurfaces = ControlSurfaces
+        };
+
+        var newState = aerodynamics.CalculateAerodynamics(currentState);
+        var aeroForces = newState.force;
+        var aeroMoment = newState.moment;
+
+        // aeroForces in pounds
+
+        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(aeroForces.y, 0, 0)), Color.red);
+        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(0, aeroForces.z, 0)), Color.green);
+        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(0, 0, aeroForces.x)), Color.blue);
+
+        var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
+        Rigidbody.AddRelativeForce(forces);
+
+        var moment = new Vector3(aeroMoment.y, aeroMoment.z, aeroMoment.x) * poundFootToNewtonMeter;
+        Rigidbody.AddRelativeTorque(moment);
     }
 
     void UpdateDrag() {
@@ -475,8 +554,12 @@ public class Plane : MonoBehaviour {
         UpdateThrottle(dt);
 
         if (!Dead) {
+            float alpha = AngleOfAttack * Mathf.Rad2Deg;
+            float beta = AngleOfAttackYaw * Mathf.Rad2Deg;
+
             //apply updates
             UpdateThrust(dt);
+            UpdateAerodynamics(dt, alpha, beta);
         }
 
         //UpdateDrag();
