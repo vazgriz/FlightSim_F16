@@ -4,9 +4,9 @@ using UnityEditor.Playables;
 using UnityEngine;
 
 public class Plane : MonoBehaviour {
-    const float poundsForceToNewtons = 4.44822f;
-    const float metersToFeet = 3.28084f;
-    const float poundFootToNewtonMeter = 1.35582f;
+    public const float poundsForceToNewtons = 4.44822f;
+    public const float metersToFeet = 3.28084f;
+    public const float poundFootToNewtonMeter = 1.35582f;
 
     [SerializeField]
     float maxHealth;
@@ -365,14 +365,20 @@ public class Plane : MonoBehaviour {
             Utilities.MoveTo(current.z, target.z, aileronSpeed,  dt, -aileronRange,  aileronRange)
         );
 
+        var lav = new Vector3(
+            Utilities.ConvertAngle360To180(LocalAngularVelocity.z),
+            Utilities.ConvertAngle360To180(LocalAngularVelocity.x),
+            Utilities.ConvertAngle360To180(-LocalAngularVelocity.y)
+        );
+
         // AerodynamicState uses aerospace conventions
         // X = forward
         // Y = right
         // Z = down
         AerodynamicState currentState = new() {
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y),
-            rotation = RollPitchYaw,
-            angularVelocity = new Vector3(LocalAngularVelocity.z, LocalAngularVelocity.x, -LocalAngularVelocity.y) * Mathf.Rad2Deg,
+            rotation = new Vector3(RollPitchYaw.z, RollPitchYaw.x, RollPitchYaw.y),
+            angularVelocity = lav,
             airData = airData,
             altitude = AltitudeFeet,
             alpha = AngleOfAttack * Mathf.Rad2Deg,
@@ -385,16 +391,13 @@ public class Plane : MonoBehaviour {
         var aeroMoment = newState.moment;
 
         // aeroForces in pounds
-
-        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(aeroForces.y, 0, 0)), Color.red);
-        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(0, aeroForces.z, 0)), Color.green);
-        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(0, 0, aeroForces.x)), Color.blue);
-
         var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
         Rigidbody.AddRelativeForce(forces);
 
         var moment = new Vector3(aeroMoment.y, aeroMoment.z, aeroMoment.x) * poundFootToNewtonMeter;
         Rigidbody.AddRelativeTorque(moment);
+
+        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(moment.x / Rigidbody.inertiaTensor.x, 0, 0)), Color.red);
     }
 
     void UpdateDrag() {

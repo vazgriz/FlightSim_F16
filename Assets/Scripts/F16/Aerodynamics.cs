@@ -184,16 +184,16 @@ public class Aerodynamics {
     }
 
     float GetElevatorForce(float alpha, float elevator, float[,] table) {
-        float S = 0.2f * alpha;
-        int K = Mathf.Clamp((int)S, -1, 8);
+        float A = 0.2f * alpha;
+        int K = Mathf.Clamp((int)A, -1, 8);
 
-        float DA = S - K;
+        float DA = A - K;
         int L = K + (int)Mathf.Sign(DA);
 
-        S = elevator / 12.0f;
-        int M = Mathf.Clamp((int)S, -1, 1);
+        float E = elevator / 12.0f;
+        int M = Mathf.Clamp((int)E, -1, 1);
 
-        float DE = S - M;
+        float DE = E - M;
         int N = M + (int)Mathf.Sign(DE);
 
         float T = ReadForceTable(table, K, M);

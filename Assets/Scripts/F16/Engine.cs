@@ -141,7 +141,7 @@ public class Engine {
     }
 
     float CalculateThrust(float power, float altitude, float rMach) {
-        float H = 0.0001f * altitude;
+        float H = 0.0001f * Mathf.Max(0, altitude);
         int I = (int)H;
 
         if (I >= 5) {
