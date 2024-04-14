@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public struct AerodynamicState {
     public Vector3 velocity;
@@ -30,7 +31,9 @@ public class Aerodynamics {
     float[,] xAxisTable;
     float[] zAxisTable;
 
+    float[,] xMomentTable;
     float[,] yMomentTable;
+    float[,] zMomentTable;
     float[] dampingTable;
 
     public Aerodynamics() {
@@ -58,6 +61,16 @@ public class Aerodynamics {
             0.770f, 0.241f, -0.100f, -0.416f, -0.731f, -1.053f, -1.366f, -1.646f, -1.917f, -2.120f, -2.248f, -2.229f
         };
 
+        xMomentTable = new float[7, 12] {
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            { -0.001f, -0.004f, -0.008f, -0.012f, -0.016f, -0.019f, -0.020f, -0.020f, -0.015f, -0.008f, -0.013f, -0.015f },
+            { -0.003f, -0.009f, -0.017f, -0.024f, -0.030f, -0.034f, -0.040f, -0.037f, -0.016f, -0.002f, -0.010f, -0.019f },
+            { -0.001f, -0.010f, -0.020f, -0.030f, -0.039f, -0.044f, -0.050f, -0.049f, -0.023f, -0.006f, -0.014f, -0.027f },
+            {  0.000f, -0.010f, -0.022f, -0.034f, -0.047f, -0.046f, -0.059f, -0.061f, -0.033f, -0.036f, -0.035f, -0.035f },
+            {  0.007f, -0.010f, -0.023f, -0.034f, -0.049f, -0.046f, -0.068f, -0.071f, -0.060f, -0.058f, -0.062f, -0.059f },
+            {  0.009f, -0.011f, -0.023f, -0.037f, -0.050f, -0.047f, -0.074f, -0.079f, -0.091f, -0.076f, -0.077f, -0.076f },
+        };
+
         yMomentTable = new float[5, 12] {
             {  0.205f,  0.168f,  0.186f,  0.196f,  0.213f,  0.251f,  0.245f,  0.238f,  0.252f,  0.231f,  0.198f,  0.192f },
             {  0.081f,  0.077f,  0.107f,  0.110f,  0.110f,  0.141f,  0.127f,  0.119f,  0.133f,  0.108f,  0.081f,  0.093f },
@@ -66,18 +79,17 @@ public class Aerodynamics {
             { -0.259f, -0.202f, -0.184f, -0.193f, -0.199f, -0.150f, -0.160f, -0.167f, -0.104f, -0.076f, -0.041f, -0.005f }
         };
 
+        zMomentTable = new float[7, 12] {
+            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            {  0.018f,  0.019f,  0.018f,  0.019f,  0.019f,  0.018f,  0.013f,  0.007f,  0.004f, -0.014f, -0.017f, -0.033f },
+            {  0.038f,  0.042f,  0.042f,  0.042f,  0.043f,  0.039f,  0.030f,  0.017f,  0.004f, -0.035f, -0.047f, -0.057f },
+            {  0.056f,  0.057f,  0.059f,  0.058f,  0.058f,  0.053f,  0.032f,  0.012f,  0.002f, -0.046f, -0.071f, -0.073f },
+            {  0.064f,  0.077f,  0.076f,  0.074f,  0.073f,  0.057f,  0.029f,  0.007f,  0.012f, -0.034f, -0.065f, -0.041f },
+            {  0.074f,  0.086f,  0.093f,  0.089f,  0.080f,  0.062f,  0.049f,  0.022f,  0.028f, -0.012f, -0.002f, -0.013f },
+            {  0.079f,  0.090f,  0.106f,  0.106f,  0.096f,  0.080f,  0.068f,  0.030f,  0.064f,  0.015f,  0.011f, -0.001f },
+        };
+
         dampingTable = new float[9];
-    }
-
-    float ReadForceTable(float[,] table, int x, int y) {
-        const int xStart = -2;
-        const int yStart = -2;
-        return table[y - yStart, x - xStart];
-    }
-
-    float ReadForceTable(float[] table, int i) {
-        const int start = -2;
-        return table[i - start];
     }
 
     float ReadDampTable(float[,] table, int x, int y) {
@@ -117,8 +129,7 @@ public class Aerodynamics {
         );
 
         Vector3 momentCoefficient = GetMomentCoefficient(
-            currentState.alpha, currentState.beta,
-            currentState.controlSurfaces.z, currentState.controlSurfaces.y, currentState.controlSurfaces.x
+            currentState.alpha, currentState.beta, currentState.controlSurfaces.x
         );
 
         CalculateDampingValues(currentState.alpha);
@@ -141,11 +152,16 @@ public class Aerodynamics {
         float B2V = B * TVT;
         float CQ = CBAR * Q * TVT;
 
+        float DAIL = currentState.controlSurfaces.z / 20.0f;
+        float DRDR = currentState.controlSurfaces.y / 30.0f;
+
         // damping
         float CXT = forceCoefficient.x + CQ * dampingTable[0];
+        float CYT = forceCoefficient.y + B2V * (dampingTable[1] * R + dampingTable[2] * P);
         float CZT = forceCoefficient.z + CQ * dampingTable[3];
-
+        float CLT = momentCoefficient.x + B2V * (dampingTable[4] * R + dampingTable[5] * P);
         float CMT = momentCoefficient.y + CQ * dampingTable[6];// + CZT * ();
+        float CNT = momentCoefficient.z;
 
         float CBTA = Mathf.Cos(betaRad);
         float U = VT * Mathf.Cos(alphaRad) * CBTA;
@@ -153,16 +169,19 @@ public class Aerodynamics {
         float W = VT * Mathf.Sin(alphaRad) * CBTA;
 
         float QS = currentState.airData.qBar * S;
+        float QSB = QS * B;
         float STH = Mathf.Sin(currentState.rotation.x * Mathf.Deg2Rad);
 
         //float UDOT = R * V - Q * W - GD * STH + (QS * CXT);
         float UDOT = QS * CXT;
         float WDOT = QS * CZT;
 
+        float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
+        float YAW = 0;
 
         result.force = new Vector3(UDOT, 0, WDOT);
-        result.moment = new Vector3(0, PITCH, 0);
+        result.moment = new Vector3(ROLL, PITCH, YAW);
 
         return result;
     }
@@ -175,33 +194,16 @@ public class Aerodynamics {
         );
     }
 
-    Vector3 GetMomentCoefficient(float alpha, float beta, float aileron, float rudder, float elevator) {
+    Vector3 GetMomentCoefficient(float alpha, float beta, float elevator) {
         return new Vector3(
-            0,
+            GetXAxisMoment(alpha, beta),
             GetYAxisMoment(alpha, elevator),
-            0
+            GetZAxisMoment(alpha, beta)
         );
     }
 
     float GetElevatorForce(float alpha, float elevator, float[,] table) {
-        float A = 0.2f * alpha;
-        int K = Mathf.Clamp((int)A, -1, 8);
-
-        float DA = A - K;
-        int L = K + (int)Mathf.Sign(DA);
-
-        float E = elevator / 12.0f;
-        int M = Mathf.Clamp((int)E, -1, 1);
-
-        float DE = E - M;
-        int N = M + (int)Mathf.Sign(DE);
-
-        float T = ReadForceTable(table, K, M);
-        float U = ReadForceTable(table, K, N);
-        float V = T + Math.Abs(DA) * (ReadForceTable(table, L, M) - T);
-        float W = U + Math.Abs(DA) * (ReadForceTable(table, L, N) - U);
-
-        float result = V + (W - V) * Math.Abs(DE);
+        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, table, 0, 9, -2, 2);
         return result;
     }
 
@@ -215,17 +217,26 @@ public class Aerodynamics {
     }
 
     float GetZAxisForce(float alpha, float beta, float elevator) {
-        float S = 0.2f * alpha;
-        int K = Mathf.Clamp((int)S, -1, 8);
-
-        float DA = S - K;
-        int L = K + (int)Mathf.Sign(DA);
-        S = ReadForceTable(zAxisTable, K) + Math.Abs(DA) * (ReadForceTable(zAxisTable, L) - ReadForceTable(zAxisTable, K));
+        float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 2);
         float CZ = S * (1 - Mathf.Pow(beta / 57.3f, 2)) - 0.19f * (elevator / 25.0f);
         return CZ;
     }
 
     float GetYAxisMoment(float alpha, float elevator) {
         return GetElevatorForce(alpha, elevator, yMomentTable);
+    }
+
+    float GetXAxisMoment(float alpha, float beta) {
+        float DUM = Table.BilinearLookup(alpha, 0.2f, beta, 0.2f, xMomentTable, -2, 9, 0, 7);
+        float CL = DUM + Mathf.Sign(beta);
+
+        return CL;
+    }
+
+    float GetZAxisMoment(float alpha, float beta) {
+        float DUM = Table.BilinearLookup(alpha, 0.2f, beta, 0.2f, zMomentTable, -2, 9, 0, 7);
+        float CL = DUM + Mathf.Sign(beta);
+
+        return CL;
     }
 }

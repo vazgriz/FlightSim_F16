@@ -396,8 +396,6 @@ public class Plane : MonoBehaviour {
 
         var moment = new Vector3(aeroMoment.y, aeroMoment.z, aeroMoment.x) * poundFootToNewtonMeter;
         Rigidbody.AddRelativeTorque(moment);
-
-        Debug.DrawLine(Rigidbody.position, Rigidbody.position + (Rigidbody.rotation * new Vector3(moment.x / Rigidbody.inertiaTensor.x, 0, 0)), Color.red);
     }
 
     void UpdateDrag() {

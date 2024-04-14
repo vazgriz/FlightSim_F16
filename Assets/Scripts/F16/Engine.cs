@@ -149,7 +149,7 @@ public class Engine {
         }
 
         float DH = H - I;
-        float RM = 5.0f * rMach;
+        float RM = 5.0f * Mathf.Max(0, rMach);
         int M = (int)RM;
 
         if (M >= 5) {
