@@ -49,7 +49,7 @@ public static class Table {
 	}
 
 	public static float LinearLookup(float value, float scale, float[] table, int min, int max) {
-		(int k0, int k1, float kT) = GetLookUpIndex(value, scale, min + 1, max - 1);
+		(int k0, int k1, float kT) = GetLookUpIndex(value, scale, min + 1, max - 2);
 		float T = ReadTable(table, k0, min);
 		float U = ReadTable(table, k1, min);
 		float result = T + Math.Abs(kT) * (U - T);
@@ -57,8 +57,8 @@ public static class Table {
 	}
 
 	public static float BilinearLookup(float xValue, float xScale, float yValue, float yScale, float[,] table, int xMin, int xMax, int yMin, int yMax) {
-		(int x0, int x1, float xT) = GetLookUpIndex(xValue, xScale, xMin + 1, xMax - 1);
-		(int y0, int y1, float yT) = GetLookUpIndex(yValue, yScale, yMin + 1, yMax - 1);
+		(int x0, int x1, float xT) = GetLookUpIndex(xValue, xScale, xMin + 1, xMax - 2);
+		(int y0, int y1, float yT) = GetLookUpIndex(yValue, yScale, yMin + 1, yMax - 2);
 		float T = ReadTable(table, x0, y0, xMin, yMin);
 		float U = ReadTable(table, x0, y1, xMin, yMin);
 		float V = T + Math.Abs(xT) * (ReadTable(table, x1, y0, xMin, yMin) - T);

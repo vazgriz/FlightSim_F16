@@ -376,7 +376,7 @@ public class Plane : MonoBehaviour {
         // Y = right
         // Z = down
         AerodynamicState currentState = new() {
-            velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y),
+            velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
             rotation = new Vector3(RollPitchYaw.z, RollPitchYaw.x, RollPitchYaw.y),
             angularVelocity = lav * Mathf.Deg2Rad,
             airData = airData,

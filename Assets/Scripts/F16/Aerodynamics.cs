@@ -20,7 +20,7 @@ public struct AerodynamicForces {
 }
 
 public class Aerodynamics {
-    const float S = 300;
+    const float wingArea = 300;
     const float B = 30;
     const float CBAR = 11.32f;
     const float GD = 32.17f;
@@ -165,11 +165,8 @@ public class Aerodynamics {
         float Q = currentState.angularVelocity.y;   // pitch rate
         float R = currentState.angularVelocity.z;   // yaw rate
 
-        float TVT = 0.0f;
-
-        if (Mathf.Abs(currentState.velocity.x) > 1) {
-            TVT = 0.5f / currentState.velocity.x;
-        }
+        float airspeed = Mathf.Max(1, currentState.velocity.magnitude);
+        float TVT = 0.5f / airspeed;
 
         float B2V = B * TVT;
         float CQ = CBAR * Q * TVT;
@@ -193,18 +190,20 @@ public class Aerodynamics {
         float V = VT * Mathf.Sin(betaRad);
         float W = VT * Mathf.Sin(alphaRad) * CBTA;
 
-        float QS = currentState.airData.qBar * S;
+        float QS = currentState.airData.qBar * wingArea;
         float QSB = QS * B;
         float CTH = Mathf.Cos(currentState.rotation.y * Mathf.Deg2Rad);
         float STH = Mathf.Sin(currentState.rotation.x * Mathf.Deg2Rad);
+        float CPH = Mathf.Cos(currentState.rotation.z * Mathf.Deg2Rad);
         float GCTH = GD * CTH;
 
         float FY = QS * CYT;    // AY (acceleration Y) in original text. Need to calculate force instead of acceleration
+        float FZ = QS * CZT;
 
         //float UDOT = R * V - Q * W - GD * STH + (QS * CXT);
         float UDOT = QS * CXT;
         float VDOT = GCTH * STH + FY;
-        float WDOT = QS * CZT;
+        float WDOT = GCTH * CPH + FZ;
 
         float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
@@ -247,7 +246,7 @@ public class Aerodynamics {
     }
 
     float GetZAxisForce(float alpha, float beta, float elevator) {
-        float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 2);
+        float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 10);
         float CZ = S * (1 - Mathf.Pow(beta / 57.3f, 2)) - 0.19f * (elevator / 25.0f);
         return CZ;
     }
@@ -257,26 +256,26 @@ public class Aerodynamics {
     }
 
     float GetXAxisMoment(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 9, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 10, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
     }
 
     float GetZAxisMoment(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, beta, 0.2f, zMomentTable, -2, 9, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, beta, 0.2f, zMomentTable, -2, 10, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
     }
 
     float GetDLDA(float alpha, float beta) {
-        float dlda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldaTable, -2, 9, -3, 3);
+        float dlda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldaTable, -2, 10, -3, 3);
         return dlda;
     }
 
     float GetDLDR(float alpha, float beta) {
-        float dldr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldrTable, -2, 9, -3, 3);
+        float dldr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldrTable, -2, 10, -3, 3);
         return dldr;
     }
 }
