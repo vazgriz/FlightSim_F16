@@ -20,8 +20,8 @@ public struct AerodynamicForces {
 }
 
 public class Aerodynamics {
-    const float wingArea = 300;
-    const float B = 30;
+    const float wingAreaFtSquared = 300;
+    const float wingSpanFt = 30;
     const float CBAR = 11.32f;
     const float GD = 32.17f;
     const float XCGR = 0.35f;
@@ -37,6 +37,8 @@ public class Aerodynamics {
     float[,] zMomentTable;
     float[,] dldaTable;
     float[,] dldrTable;
+    float[,] dndaTable;
+    float[,] dndrTable;
 
     public Aerodynamics() {
         dampTable = new float[9, 12] {
@@ -112,6 +114,26 @@ public class Aerodynamics {
             {  0.021f,  0.011f,  0.010f,  0.011f,  0.010f,  0.009f,  0.008f,  0.010f,  0.006f,  0.005f,  0.000f,  0.001f },
             {  0.023f,  0.010f,  0.011f,  0.011f,  0.011f,  0.010f,  0.008f,  0.010f,  0.006f,  0.014f,  0.020f,  0.000f },
         };
+
+        dndaTable = new float[7, 12] {
+            {  0.001f, +0.027f, -0.017f, -0.013f, -0.012f, -0.016f,  0.001f,  0.017f,  0.011f,  0.017f,  0.008f,  0.016f },
+            {  0.002f, -0.014f, -0.016f, -0.016f, -0.014f, -0.019f, -0.021f,  0.002f,  0.012f,  0.015f,  0.015f,  0.011f },
+            { -0.006f, -0.008f, -0.006f, -0.006f, -0.005f, -0.008f, -0.005f,  0.007f,  0.004f,  0.007f,  0.006f,  0.006f },
+            { -0.011f, -0.011f, -0.010f, -0.009f, -0.008f, -0.006f,  0.000f,  0.004f,  0.007f,  0.010f,  0.004f,  0.010f },
+            { -0.015f, -0.015f, -0.014f, -0.012f, -0.011f, -0.008f, -0.002f,  0.002f,  0.006f,  0.012f,  0.011f,  0.011f },
+            { -0.024f, -0.010f, -0.004f, -0.002f, -0.001f,  0.003f,  0.014f,  0.006f, -0.001f,  0.004f,  0.004f,  0.006f },
+            { -0.022f,  0.002f, -0.003f, -0.005f, -0.003f, -0.001f, -0.009f, -0.009f, -0.001f,  0.003f, -0.002f,  0.001f },
+        };
+
+        dndrTable = new float[7, 12] {
+            { -0.018f, -0.052f, -0.052f, -0.052f, -0.054f, -0.049f, -0.059f, -0.051f, -0.030f, -0.037f, -0.026f, -0.013f },
+            { -0.028f, -0.051f, -0.043f, -0.046f, -0.045f, -0.049f, -0.057f, -0.052f, -0.030f, -0.033f, -0.030f, -0.008f },
+            { -0.037f, -0.041f, -0.038f, -0.040f, -0.040f, -0.038f, -0.037f, -0.030f, -0.027f, -0.024f, -0.019f, -0.013f },
+            { -0.048f, -0.045f, -0.045f, -0.045f, -0.044f, -0.045f, -0.047f, -0.048f, -0.049f, -0.045f, -0.033f, -0.016f },
+            { -0.043f, -0.044f, -0.041f, -0.041f, -0.040f, -0.038f, -0.034f, -0.035f, -0.035f, -0.029f, -0.022f, -0.009f },
+            { -0.052f, -0.034f, -0.036f, -0.036f, -0.035f, -0.028f, -0.024f, -0.023f, -0.020f, -0.016f, -0.010f, -0.014f },
+            { -0.062f, -0.034f, -0.027f, -0.028f, -0.027f, -0.027f, -0.023f, -0.023f, -0.019f, -0.009f, -0.025f, -0.010f },
+        };
     }
 
     float ReadDampTable(float[,] table, int x, int y) {
@@ -168,7 +190,7 @@ public class Aerodynamics {
         float airspeed = Mathf.Max(1, currentState.velocity.magnitude);
         float TVT = 0.5f / airspeed;
 
-        float B2V = B * TVT;
+        float B2V = wingSpanFt * TVT;
         float CQ = CBAR * Q * TVT;
 
         float DAIL = currentState.controlSurfaces.z / 20.0f;
@@ -183,15 +205,17 @@ public class Aerodynamics {
         CLT += GetDLDA(currentState.alpha, currentState.beta) * DAIL;
         CLT += GetDLDR(currentState.alpha, currentState.beta) * DRDR;
         float CMT = momentCoefficient.y + CQ * dampingTable[6];// + CZT * ();
-        float CNT = momentCoefficient.z;
+        float CNT = momentCoefficient.z + B2V * (dampingTable[7] * R + dampingTable[8] * P);// + CYT * ()
+        CNT += GetDNDA(currentState.alpha, currentState.beta) * DAIL;
+        CNT += GetDNDR(currentState.alpha, currentState.beta) * DRDR;
 
         float CBTA = Mathf.Cos(betaRad);
         float U = VT * Mathf.Cos(alphaRad) * CBTA;
         float V = VT * Mathf.Sin(betaRad);
         float W = VT * Mathf.Sin(alphaRad) * CBTA;
 
-        float QS = currentState.airData.qBar * wingArea;
-        float QSB = QS * B;
+        float QS = currentState.airData.qBar * wingAreaFtSquared;
+        float QSB = QS * wingSpanFt;
         float CTH = Mathf.Cos(currentState.rotation.y * Mathf.Deg2Rad);
         float STH = Mathf.Sin(currentState.rotation.x * Mathf.Deg2Rad);
         float CPH = Mathf.Cos(currentState.rotation.z * Mathf.Deg2Rad);
@@ -207,7 +231,7 @@ public class Aerodynamics {
 
         float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
-        float YAW = 0;
+        float YAW = QSB * CNT;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
         result.moment = new Vector3(ROLL, PITCH, YAW);
@@ -263,7 +287,7 @@ public class Aerodynamics {
     }
 
     float GetZAxisMoment(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, beta, 0.2f, zMomentTable, -2, 10, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, zMomentTable, -2, 10, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
@@ -277,5 +301,15 @@ public class Aerodynamics {
     float GetDLDR(float alpha, float beta) {
         float dldr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldrTable, -2, 10, -3, 3);
         return dldr;
+    }
+
+    float GetDNDA(float alpha, float beta) {
+        float dnda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dndaTable, -2, 10, -3, 3);
+        return dnda;
+    }
+
+    float GetDNDR(float alpha, float beta) {
+        float dndr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dndrTable, -2, 10, -3, 3);
+        return dndr;
     }
 }

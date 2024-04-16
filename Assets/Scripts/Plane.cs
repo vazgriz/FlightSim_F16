@@ -357,7 +357,7 @@ public class Plane : MonoBehaviour {
 
     void UpdateAerodynamics(float dt, float alpha, float beta) {
         var current = ControlSurfaces;
-        var target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, rudderRange, aileronRange));
+        var target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
 
         ControlSurfaces = new Vector3(
             Utilities.MoveTo(current.x, target.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
