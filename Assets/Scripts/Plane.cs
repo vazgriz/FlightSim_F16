@@ -33,6 +33,8 @@ public class Plane : MonoBehaviour {
 
     [Header("Steering")]
     [SerializeField]
+    bool enableFCS;
+    [SerializeField]
     float inputLag;
     [SerializeField]
     float aileronRange;
@@ -140,6 +142,15 @@ public class Plane : MonoBehaviour {
     AirDataComputer airDataComputer;
     Engine engine;
     Aerodynamics aerodynamics;
+
+    public bool EnableFCS {
+        get {
+            return enableFCS;
+        }
+        set {
+            enableFCS = value;
+        }
+    }
 
     public Vector3 ControlSurfaces { get; private set; }
     public Vector3 ControlSurfacesNormalized { get; private set; }
@@ -365,21 +376,28 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateControls(float dt) {
-        Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
-        Vector3 targetAV = Vector3.Scale(controlInput, steeringSpeed);
+        Vector3 target;
 
-        rollController.min = -aileronRange;
-        rollController.max = aileronRange;
-        pitchController.min = -elevatorRange;
-        pitchController.max = elevatorRange;
-        yawController.min = -rudderRange;
-        yawController.max = rudderRange;
+        if (EnableFCS) {
+            Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
+            Vector3 targetAV = Vector3.Scale(controlInput, steeringSpeed);
 
-        Vector3 target = new Vector3(
-            -pitchController.Calculate(dt, av.x, targetAV.x),
-            -yawController.Calculate(dt, av.y, targetAV.y),
-            rollController.Calculate(dt, av.z, targetAV.z)
-        );
+            rollController.min = -aileronRange;
+            rollController.max = aileronRange;
+            pitchController.min = -elevatorRange;
+            pitchController.max = elevatorRange;
+            yawController.min = -rudderRange;
+            yawController.max = rudderRange;
+
+            target = new Vector3(
+                -pitchController.Calculate(dt, av.x, targetAV.x),
+                -yawController.Calculate(dt, av.y, targetAV.y),
+                rollController.Calculate(dt, av.z, targetAV.z)
+            );
+        } else {
+            // set control surface position directly from input
+            target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
+        }
 
         var current = ControlSurfaces;
 
