@@ -1030,7 +1030,9 @@ GameObject:
   - component: {fileID: 919132147950539515}
   - component: {fileID: 919132147950539514}
   - component: {fileID: 919132147950539513}
+  - component: {fileID: 919132147950539517}
   - component: {fileID: 919132147950539512}
+  - component: {fileID: 919132147950539516}
   m_Layer: 0
   m_Name: F16
   m_TagString: Untagged
@@ -1067,6 +1069,25 @@ MonoBehaviour:
   aileronSpeed: 80
   elevatorSpeed: 60
   rudderSpeed: 120
+  steeringSpeed: {x: 30, y: 15, z: 180}
+  rollController:
+    P: 2
+    I: 0
+    D: 0.1
+    min: 0
+    max: 0
+  pitchController:
+    P: 5
+    I: 0
+    D: 0.1
+    min: 0
+    max: 0
+  yawController:
+    P: 5
+    I: 0
+    D: 1
+    min: 0
+    max: 0
   dragForward:
     serializedVersion: 2
     m_Curve: []
@@ -1198,6 +1219,66 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &919132147950539516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132147950539511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 349abc4b7cd83c8458fcae5d0300d587, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  afterburnerGraphics: []
+  afterburnerThreshold: 0
+  afterburnerMinSize: 0
+  afterburnerMaxSize: 0
+  deflectionSpeed: 0
+  controlSurfaces:
+  - name: LeftFlaperon
+    min: -1
+    max: 1
+    influence: {x: 0, y: 0, z: -1}
+  - name: RightFlaperon
+    min: -1
+    max: 1
+    influence: {x: 0, y: 0, z: 1}
+  - name: LeftStabilator
+    min: -1
+    max: 1
+    influence: {x: -1, y: 0, z: 0}
+  - name: RightStabilator
+    min: -1
+    max: 1
+    influence: {x: -1, y: 0, z: 0}
+  - name: Rudder
+    min: -1
+    max: 1
+    influence: {x: 0, y: -1, z: 0}
+  missileGraphics: []
+--- !u!95 &919132147950539517
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132147950539511}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: 8bc8e61ad497e054eb2c7a9275448f73, type: 3}
+  m_Controller: {fileID: 9100000, guid: cf2dcd02892b22f44bbd2f596cd27169, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1181743039772434162
 GameObject:
   m_ObjectHideFlags: 0

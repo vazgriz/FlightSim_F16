@@ -46,6 +46,14 @@ public class Plane : MonoBehaviour {
     float elevatorSpeed;
     [SerializeField]
     float rudderSpeed;
+    [SerializeField]
+    Vector3 steeringSpeed;
+    [SerializeField]
+    PIDController rollController;
+    [SerializeField]
+    PIDController pitchController;
+    [SerializeField]
+    PIDController yawController;
 
     [Header("Drag")]
     [SerializeField]
@@ -134,6 +142,7 @@ public class Plane : MonoBehaviour {
     Aerodynamics aerodynamics;
 
     public Vector3 ControlSurfaces { get; private set; }
+    public Vector3 ControlSurfacesNormalized { get; private set; }
 
     public float MaxHealth {
         get {
@@ -355,20 +364,43 @@ public class Plane : MonoBehaviour {
         Rigidbody.AddRelativeForce(new Vector3(0, 0, engine.Thrust * poundsForceToNewtons));
     }
 
-    void UpdateAerodynamics(float dt, float alpha, float beta) {
+    void UpdateControls(float dt) {
+        Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
+        Vector3 targetAV = Vector3.Scale(controlInput, steeringSpeed);
+
+        rollController.min = -aileronRange;
+        rollController.max = aileronRange;
+        pitchController.min = -elevatorRange;
+        pitchController.max = elevatorRange;
+        yawController.min = -rudderRange;
+        yawController.max = rudderRange;
+
+        Vector3 target = new Vector3(
+            -pitchController.Calculate(dt, av.x, targetAV.x),
+            -yawController.Calculate(dt, av.y, targetAV.y),
+            rollController.Calculate(dt, av.z, targetAV.z)
+        );
+
         var current = ControlSurfaces;
-        var target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
 
         ControlSurfaces = new Vector3(
             Utilities.MoveTo(current.x, target.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
-            Utilities.MoveTo(current.y, target.y, rudderSpeed,   dt, -rudderRange,   rudderRange),
-            Utilities.MoveTo(current.z, target.z, aileronSpeed,  dt, -aileronRange,  aileronRange)
+            Utilities.MoveTo(current.y, target.y, rudderSpeed, dt, -rudderRange, rudderRange),
+            Utilities.MoveTo(current.z, target.z, aileronSpeed, dt, -aileronRange, aileronRange)
         );
 
+        ControlSurfacesNormalized = new Vector3(
+            ControlSurfaces.x / elevatorRange,
+            ControlSurfaces.y / rudderRange,
+            ControlSurfaces.z / aileronRange
+        );
+    }
+
+    void UpdateAerodynamics(float alpha, float beta) {
         var lav = new Vector3(
-            Utilities.ConvertAngle360To180(LocalAngularVelocity.z * Mathf.Rad2Deg),
-            Utilities.ConvertAngle360To180(LocalAngularVelocity.x * Mathf.Rad2Deg),
-            Utilities.ConvertAngle360To180(-LocalAngularVelocity.y * Mathf.Rad2Deg)
+            LocalAngularVelocity.z,
+            LocalAngularVelocity.x,
+            -LocalAngularVelocity.y
         );
 
         // AerodynamicState uses aerospace conventions
@@ -378,11 +410,11 @@ public class Plane : MonoBehaviour {
         AerodynamicState currentState = new() {
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
             rotation = new Vector3(RollPitchYaw.z, RollPitchYaw.x, RollPitchYaw.y),
-            angularVelocity = lav * Mathf.Deg2Rad,
+            angularVelocity = lav,
             airData = airData,
             altitude = AltitudeFeet,
-            alpha = AngleOfAttack * Mathf.Rad2Deg,
-            beta = AngleOfAttackYaw * Mathf.Rad2Deg,
+            alpha = alpha,
+            beta = beta,
             controlSurfaces = new Vector3(ControlSurfaces.x, ControlSurfaces.y, -ControlSurfaces.z)
         };
 
@@ -560,7 +592,8 @@ public class Plane : MonoBehaviour {
 
             //apply updates
             UpdateThrust(dt);
-            UpdateAerodynamics(dt, alpha, beta);
+            UpdateControls(dt);
+            UpdateAerodynamics(alpha, beta);
         }
 
         //UpdateDrag();

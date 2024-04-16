@@ -36,8 +36,8 @@ ModelImporter:
       name: LeftFlaperon
       takeName: Armature|ArmatureAction
       internalID: 4781951162920444690
-      firstFrame: 0
-      lastFrame: 60
+      firstFrame: 10
+      lastFrame: 70
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -109,8 +109,8 @@ ModelImporter:
       name: RightFlaperon
       takeName: Armature|ArmatureAction
       internalID: -2674958278859614444
-      firstFrame: 0
-      lastFrame: 60
+      firstFrame: 10
+      lastFrame: 70
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -176,6 +176,298 @@ ModelImporter:
       - path: F16
         weight: 0
       maskType: 0
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: LeftStabilator
+      takeName: Armature|ArmatureAction
+      internalID: 4594303134292970328
+      firstFrame: 10
+      lastFrame: 70
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Armature
+        weight: 0
+      - path: Armature/Root
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L/Airbrake_L_L_end
+        weight: 0
+      - path: Armature/Root/Airbrake_L_U
+        weight: 0
+      - path: Armature/Root/Airbrake_L_U/Airbrake_L_U_end
+        weight: 0
+      - path: Armature/Root/Airbrake_R_L
+        weight: 0
+      - path: Armature/Root/Airbrake_R_L/Airbrake_R_L_end
+        weight: 0
+      - path: Armature/Root/Airbrake_R_U
+        weight: 0
+      - path: Armature/Root/Airbrake_R_U/Airbrake_R_U_end
+        weight: 0
+      - path: Armature/Root/LeftFlaperon
+        weight: 0
+      - path: Armature/Root/LeftFlaperon/LeftFlaperon_end
+        weight: 0
+      - path: Armature/Root/LeftStabliator
+        weight: 1
+      - path: Armature/Root/LeftStabliator/LeftStabliator_end
+        weight: 1
+      - path: Armature/Root/RightFlaperon
+        weight: 0
+      - path: Armature/Root/RightFlaperon/RightFlaperon_end
+        weight: 0
+      - path: Armature/Root/RightStabliator
+        weight: 0
+      - path: Armature/Root/RightStabliator/RightStabliator_end
+        weight: 0
+      - path: Armature/Root/Rudder
+        weight: 0
+      - path: Armature/Root/Rudder/Rudder_end
+        weight: 0
+      - path: F16
+        weight: 0
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: RightStabilator
+      takeName: Armature|ArmatureAction
+      internalID: 3696890337287820257
+      firstFrame: 10
+      lastFrame: 70
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Armature
+        weight: 0
+      - path: Armature/Root
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L/Airbrake_L_L_end
+        weight: 0
+      - path: Armature/Root/Airbrake_L_U
+        weight: 0
+      - path: Armature/Root/Airbrake_L_U/Airbrake_L_U_end
+        weight: 0
+      - path: Armature/Root/Airbrake_R_L
+        weight: 0
+      - path: Armature/Root/Airbrake_R_L/Airbrake_R_L_end
+        weight: 0
+      - path: Armature/Root/Airbrake_R_U
+        weight: 0
+      - path: Armature/Root/Airbrake_R_U/Airbrake_R_U_end
+        weight: 0
+      - path: Armature/Root/LeftFlaperon
+        weight: 0
+      - path: Armature/Root/LeftFlaperon/LeftFlaperon_end
+        weight: 0
+      - path: Armature/Root/LeftStabliator
+        weight: 0
+      - path: Armature/Root/LeftStabliator/LeftStabliator_end
+        weight: 0
+      - path: Armature/Root/RightFlaperon
+        weight: 0
+      - path: Armature/Root/RightFlaperon/RightFlaperon_end
+        weight: 0
+      - path: Armature/Root/RightStabliator
+        weight: 1
+      - path: Armature/Root/RightStabliator/RightStabliator_end
+        weight: 1
+      - path: Armature/Root/Rudder
+        weight: 0
+      - path: Armature/Root/Rudder/Rudder_end
+        weight: 0
+      - path: F16
+        weight: 0
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Rudder
+      takeName: Armature|ArmatureAction
+      internalID: 5401091116426756364
+      firstFrame: 10
+      lastFrame: 70
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Armature
+        weight: 0
+      - path: Armature/Root
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L/Airbrake_L_L_end
+        weight: 0
+      - path: Armature/Root/Airbrake_L_U
+        weight: 0
+      - path: Armature/Root/Airbrake_L_U/Airbrake_L_U_end
+        weight: 0
+      - path: Armature/Root/Airbrake_R_L
+        weight: 0
+      - path: Armature/Root/Airbrake_R_L/Airbrake_R_L_end
+        weight: 0
+      - path: Armature/Root/Airbrake_R_U
+        weight: 0
+      - path: Armature/Root/Airbrake_R_U/Airbrake_R_U_end
+        weight: 0
+      - path: Armature/Root/LeftFlaperon
+        weight: 0
+      - path: Armature/Root/LeftFlaperon/LeftFlaperon_end
+        weight: 0
+      - path: Armature/Root/LeftStabliator
+        weight: 0
+      - path: Armature/Root/LeftStabliator/LeftStabliator_end
+        weight: 0
+      - path: Armature/Root/RightFlaperon
+        weight: 0
+      - path: Armature/Root/RightFlaperon/RightFlaperon_end
+        weight: 0
+      - path: Armature/Root/RightStabliator
+        weight: 0
+      - path: Armature/Root/RightStabliator/RightStabliator_end
+        weight: 0
+      - path: Armature/Root/Rudder
+        weight: 1
+      - path: Armature/Root/Rudder/Rudder_end
+        weight: 1
+      - path: F16
+        weight: 0
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Airbrakes
+      takeName: Armature|ArmatureAction
+      internalID: -6363362177140661055
+      firstFrame: 0
+      lastFrame: 70
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Armature
+        weight: 0
+      - path: Armature/Root
+        weight: 0
+      - path: Armature/Root/Airbrake_L_L
+        weight: 1
+      - path: Armature/Root/Airbrake_L_L/Airbrake_L_L_end
+        weight: 1
+      - path: Armature/Root/Airbrake_L_U
+        weight: 1
+      - path: Armature/Root/Airbrake_L_U/Airbrake_L_U_end
+        weight: 1
+      - path: Armature/Root/Airbrake_R_L
+        weight: 1
+      - path: Armature/Root/Airbrake_R_L/Airbrake_R_L_end
+        weight: 1
+      - path: Armature/Root/Airbrake_R_U
+        weight: 1
+      - path: Armature/Root/Airbrake_R_U/Airbrake_R_U_end
+        weight: 1
+      - path: Armature/Root/LeftFlaperon
+        weight: 0
+      - path: Armature/Root/LeftFlaperon/LeftFlaperon_end
+        weight: 0
+      - path: Armature/Root/LeftStabliator
+        weight: 0
+      - path: Armature/Root/LeftStabliator/LeftStabliator_end
+        weight: 0
+      - path: Armature/Root/RightFlaperon
+        weight: 0
+      - path: Armature/Root/RightFlaperon/RightFlaperon_end
+        weight: 0
+      - path: Armature/Root/RightStabliator
+        weight: 0
+      - path: Armature/Root/RightStabliator/RightStabliator_end
+        weight: 0
+      - path: Armature/Root/Rudder
+        weight: 1
+      - path: Armature/Root/Rudder/Rudder_end
+        weight: 1
+      - path: F16
+        weight: 0
+      maskType: 3
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     isReadable: 0
@@ -245,7 +537,7 @@ ModelImporter:
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 0
+  avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 0
   remapMaterialsIfMaterialImportModeIsNone: 0

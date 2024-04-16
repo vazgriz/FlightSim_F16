@@ -225,7 +225,7 @@ public class Aerodynamics {
         float FZ = QS * CZT;
 
         //float UDOT = R * V - Q * W - GD * STH + (QS * CXT);
-        float UDOT = QS * CXT;
+        float UDOT = GD * STH + QS * CXT;
         float VDOT = GCTH * STH + FY;
         float WDOT = GCTH * CPH + FZ;
 
