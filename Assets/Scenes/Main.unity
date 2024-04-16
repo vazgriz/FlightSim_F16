@@ -1069,7 +1069,7 @@ MonoBehaviour:
   aileronSpeed: 80
   elevatorSpeed: 60
   rudderSpeed: 120
-  steeringSpeed: {x: 30, y: 15, z: 180}
+  steeringSpeed: {x: 30, y: 30, z: 180}
   rollController:
     P: 2
     I: 0

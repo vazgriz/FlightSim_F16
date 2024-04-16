@@ -12,6 +12,7 @@ public class AirDataComputer {
     /// Density in slugs/ft^3
     /// </summary>
     public const float SeaLevelDensity = 2.377e-3f;
+    public const float MaxAltitude = 35000.0f;
 
     /// <summary>
     /// Calculates air data based on velocity and altitude
@@ -20,10 +21,11 @@ public class AirDataComputer {
     /// <param name="altitude">Altitude in ft</param>
     /// <returns>Air data</returns>
     public AirData CalculateAirData(float velocity, float altitude) {
+        altitude = Mathf.Clamp(altitude, 0, MaxAltitude);
         float temperatureFactor = 1.0f - 0.703e-5f * altitude;
         float T = 519.0f * temperatureFactor;   // temperature in Rankine
 
-        if (altitude >= 35000.0f) {
+        if (altitude >= MaxAltitude) {
             T = 390.0f;
         }
 
