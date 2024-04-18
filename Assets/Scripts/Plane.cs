@@ -6,6 +6,7 @@ using UnityEngine;
 public class Plane : MonoBehaviour {
     public const float poundsForceToNewtons = 4.44822f;
     public const float metersToFeet = 3.28084f;
+    public const float feetToMeters = 1.0f / metersToFeet;
     public const float poundFootToNewtonMeter = 1.35582f;
 
     [SerializeField]
@@ -30,6 +31,10 @@ public class Plane : MonoBehaviour {
     float flapsDrag;
     [SerializeField]
     float flapsRetractSpeed;
+    [SerializeField]
+    float forceFactor;
+    [SerializeField]
+    float accelFactor;
 
     [Header("Steering")]
     [SerializeField]
@@ -427,7 +432,6 @@ public class Plane : MonoBehaviour {
         // Z = down
         AerodynamicState currentState = new() {
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
-            rotation = new Vector3(RollPitchYaw.z, RollPitchYaw.x, RollPitchYaw.y),
             angularVelocity = lav,
             airData = airData,
             altitude = AltitudeFeet,
@@ -438,11 +442,15 @@ public class Plane : MonoBehaviour {
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);
         var aeroForces = newState.force;
+        var aeroAccel = newState.acceleration;
         var aeroMoment = newState.moment;
 
         // aeroForces in pounds
         var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
-        Rigidbody.AddRelativeForce(forces);
+        Rigidbody.AddRelativeForce(forces * forceFactor);
+
+        var accel = new Vector3(aeroAccel.y, -aeroAccel.z, aeroAccel.x) * feetToMeters;
+        Rigidbody.AddRelativeForce(accel * accelFactor, ForceMode.Acceleration);
 
         var moment = new Vector3(aeroMoment.y, aeroMoment.z, aeroMoment.x) * poundFootToNewtonMeter;
         Rigidbody.AddRelativeTorque(moment);

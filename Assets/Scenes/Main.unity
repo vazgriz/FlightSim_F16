@@ -1062,6 +1062,8 @@ MonoBehaviour:
   flapsAOABias: 0
   flapsDrag: 0
   flapsRetractSpeed: 0
+  forceFactor: 1
+  accelFactor: 0
   enableFCS: 1
   inputLag: 0.05
   aileronRange: 21.5
@@ -1203,7 +1205,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 9298
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}

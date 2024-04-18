@@ -64,7 +64,7 @@ public class Engine {
     public void Update(float dt) {
         targetPower = CalculateThrottleGear(Throttle);
         float powerChangeRate = CalculatePowerRateOfChange(currentPower, targetPower);
-        currentPower = Utilities.MoveTo(currentPower, targetPower, powerChangeRate, dt, 0, 100);
+        currentPower = Utilities.MoveTo(currentPower, targetPower, Mathf.Abs(powerChangeRate), dt, 0, 100);
 
         Thrust = CalculateThrust(currentPower, Altitude, Mach);
     }
@@ -126,48 +126,24 @@ public class Engine {
         return rTau;
     }
 
-    float BilinearLookup(float[,] table, int I, int M, float CDH, float DH, float DM) {
-        // perform bilinear interpolation
-        float S = table[I, M    ] * CDH  +  table[I + 1, M    ] * DH;
-        float T = table[I, M + 1] * CDH  +  table[I + 1, M + 1] * DH;
-        float value = S + (T - S) * DM;
-
-        return value;
-    }
-
     float InterpolateThrust(float thrust1, float thrust2, float power) {
         float result = Mathf.LerpUnclamped(thrust1, thrust2, power * 0.02f);
         return result;
     }
 
     float CalculateThrust(float power, float altitude, float rMach) {
-        float H = 0.0001f * Mathf.Max(0, altitude);
-        int I = (int)H;
-
-        if (I >= 5) {
-            I = 4;
-        }
-
-        float DH = H - I;
-        float RM = 5.0f * Mathf.Max(0, rMach);
-        int M = (int)RM;
-
-        if (M >= 5) {
-            M = 4;
-        }
-
-        float DM = RM - M;
-        float CDH = 1.0f - DH;
+        float a = Mathf.Max(0, altitude);
+        float m = Mathf.Max(0, rMach);
 
         float thrust;
-        float thrustMilitary = BilinearLookup(militaryPowerTable, I, M, CDH, DH, DM);
+        float thrustMilitary = Table.BilinearLookup(a, 0.0001f, m, 5, militaryPowerTable, 0, 6, 0, 6);
 
         // perform trilinear interpolation
         if (power < 50.0) {
-            float thrustIdle = BilinearLookup(idlePowerTable, I, M, CDH, DH, DM);
+            float thrustIdle = Table.BilinearLookup(a, 0.0001f, m, 5, idlePowerTable, 0, 6, 0, 6);
             thrust = InterpolateThrust(thrustIdle, thrustMilitary, power);
         } else {
-            float thrustMax = BilinearLookup(maxPowerTable, I, M, CDH, DH, DM);
+            float thrustMax = Table.BilinearLookup(a, 0.0001f, m, 5, maxPowerTable, 0, 6, 0, 6);
             thrust = InterpolateThrust(thrustMilitary, thrustMax, power - 50.0f);
         }
 

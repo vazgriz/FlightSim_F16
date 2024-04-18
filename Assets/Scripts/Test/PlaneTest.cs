@@ -46,7 +46,6 @@ public class PlaneTest : MonoBehaviour {
 
         AerodynamicState state = new() {
             velocity = new Vector3(speed, 0, 0),
-            rotation = new Vector3(rollPitchYaw.z, rollPitchYaw.x, rollPitchYaw.y),
             angularVelocity = new Vector3(0, 0, 0),
             airData = airData,
             altitude = altitude,

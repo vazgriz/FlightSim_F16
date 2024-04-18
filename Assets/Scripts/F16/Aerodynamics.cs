@@ -5,7 +5,6 @@ using UnityEngine.UIElements;
 
 public struct AerodynamicState {
     public Vector3 velocity;
-    public Vector3 rotation;
     public Vector3 angularVelocity;
     public AirData airData;
     public float altitude;
@@ -16,6 +15,7 @@ public struct AerodynamicState {
 
 public struct AerodynamicForces {
     public Vector3 force;
+    public Vector3 acceleration;
     public Vector3 moment;
 }
 
@@ -23,7 +23,6 @@ public class Aerodynamics {
     const float wingAreaFtSquared = 300;
     const float wingSpanFt = 30;
     const float CBAR = 11.32f;
-    const float GD = 32.17f;
     const float XCGR = 0.35f;
     const float XCG = 0.35f;
 
@@ -178,16 +177,12 @@ public class Aerodynamics {
 
         CalculateDampingValues(currentState.alpha);
 
-        float alphaRad = currentState.alpha * Mathf.Deg2Rad;
-        float betaRad = currentState.beta * Mathf.Deg2Rad;
-        float VT = currentState.velocity.x;
-
         // P Q R
         float P = currentState.angularVelocity.x;   // roll rate
         float Q = currentState.angularVelocity.y;   // pitch rate
         float R = currentState.angularVelocity.z;   // yaw rate
 
-        float airspeed = Mathf.Max(1, currentState.velocity.magnitude);
+        float airspeed = Mathf.Max(1, currentState.velocity.x);
         float TVT = 0.5f / airspeed;
 
         float B2V = wingSpanFt * TVT;
@@ -209,31 +204,29 @@ public class Aerodynamics {
         CNT += GetDNDA(currentState.alpha, currentState.beta) * DAIL;
         CNT += GetDNDR(currentState.alpha, currentState.beta) * DRDR;
 
-        float CBTA = Mathf.Cos(betaRad);
-        float U = VT * Mathf.Cos(alphaRad) * CBTA;
-        float V = VT * Mathf.Sin(betaRad);
-        float W = VT * Mathf.Sin(alphaRad) * CBTA;
+        float U = currentState.velocity.x;
+        float V = currentState.velocity.y;
+        float W = currentState.velocity.z;
 
         float QS = currentState.airData.qBar * wingAreaFtSquared;
         float QSB = QS * wingSpanFt;
-        float CTH = Mathf.Cos(currentState.rotation.y * Mathf.Deg2Rad);
-        float STH = Mathf.Sin(currentState.rotation.x * Mathf.Deg2Rad);
-        float CPH = Mathf.Cos(currentState.rotation.z * Mathf.Deg2Rad);
-        float GCTH = GD * CTH;
 
-        float FY = QS * CYT;    // AY (acceleration Y) in original text. Need to calculate force instead of acceleration
-        float FZ = QS * CZT;
+        // forces
+        float UDOT = QS * CXT;  // Acceleration in original text. Need to calculate force instead of acceleration
+        float VDOT = QS * CYT;
+        float WDOT = QS * CZT;
 
-        //float UDOT = R * V - Q * W - GD * STH + (QS * CXT);
-        float UDOT = GD * STH + QS * CXT;
-        float VDOT = GCTH * STH + FY;
-        float WDOT = GCTH * CPH + FZ;
+        // acceleration
+        float uAccel = (R * V) - (Q * W);
+        float vAccel = (P * W) - (R * U);
+        float wAccel = (Q * U) - (P * V);
 
         float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
         float YAW = QSB * CNT;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
+        result.acceleration = new Vector3(uAccel, vAccel, wAccel);
         result.moment = new Vector3(ROLL, PITCH, YAW);
 
         return result;
@@ -271,7 +264,7 @@ public class Aerodynamics {
 
     float GetZAxisForce(float alpha, float beta, float elevator) {
         float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 10);
-        float CZ = S * (1 - Mathf.Pow(beta / 57.3f, 2)) - 0.19f * (elevator / 25.0f);
+        float CZ = S * (1 - Mathf.Pow(beta * Mathf.Deg2Rad, 2)) - 0.19f * (elevator / 25.0f);
         return CZ;
     }
 
