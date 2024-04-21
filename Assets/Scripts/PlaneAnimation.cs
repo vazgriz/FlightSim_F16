@@ -43,8 +43,6 @@ public class PlaneAnimation : MonoBehaviour {
     Plane plane;
     Animator animator;
     List<Transform> afterburnersTransforms;
-    Dictionary<Transform, Quaternion> neutralPoses;
-    Vector3 deflection;
     float airbrakePosition;
     float flapsPosition;
 
@@ -53,7 +51,6 @@ public class PlaneAnimation : MonoBehaviour {
         animator = GetComponent<Animator>();
 
         afterburnersTransforms = new List<Transform>();
-        neutralPoses = new Dictionary<Transform, Quaternion>();
 
         foreach (var go in afterburnerGraphics) {
             afterburnersTransforms.Add(go.GetComponent<Transform>());
@@ -68,13 +65,9 @@ public class PlaneAnimation : MonoBehaviour {
         missileGraphics[index].SetActive(visible);
     }
 
-    Quaternion CalculatePose(Transform transform, Quaternion offset) {
-        return neutralPoses[transform] * offset;
-    }
-
     void UpdateAfterburners() {
-        float throttle = plane.Throttle;
-        float afterburnerT = Mathf.Clamp01(Mathf.InverseLerp(afterburnerThreshold, 1, throttle));
+        float throttle = plane.EnginePowerOutput;
+        float afterburnerT = Mathf.Clamp01(Mathf.InverseLerp(afterburnerThreshold, 100, throttle));
         float size = Mathf.Lerp(afterburnerMinSize, afterburnerMaxSize, afterburnerT);
 
         if (throttle >= afterburnerThreshold) {

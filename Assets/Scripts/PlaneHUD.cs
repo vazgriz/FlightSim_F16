@@ -19,6 +19,8 @@ public class PlaneHUD : MonoBehaviour {
     [SerializeField]
     PitchLadder pitchLadder;
     [SerializeField]
+    Slider throttleArrow;
+    [SerializeField]
     Bar throttleBar;
     [SerializeField]
     Transform hudCenter;
@@ -325,7 +327,10 @@ public class PlaneHUD : MonoBehaviour {
         if (plane == null) return;
         if (camera == null) return;
 
-        throttleBar.SetValue(plane.Throttle);
+        float power = Engine.InvertThrottleGear(plane.EnginePowerOutput);
+
+        throttleArrow.SetValue(plane.Throttle);
+        throttleBar.SetValue(power);
 
         if (!plane.Dead) {
             UpdateVelocityMarker();

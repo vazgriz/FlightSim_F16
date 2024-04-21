@@ -147,6 +147,11 @@ public class Plane : MonoBehaviour {
     AirDataComputer airDataComputer;
     Engine engine;
     Aerodynamics aerodynamics;
+    List<float> gForceTable;
+    int gForceTableMin;
+    int gForceTableMax;
+    float gForceInputMin;
+    float gForceInputMax;
 
     public bool EnableFCS {
         get {
@@ -192,6 +197,8 @@ public class Plane : MonoBehaviour {
 
     public Rigidbody Rigidbody { get; private set; }
     public float Throttle { get; private set; }
+    public float EnginePowerCommand { get; private set; }
+    public float EnginePowerOutput { get; private set; }
     public Vector3 EffectiveInput { get; private set; }
     public Vector3 Velocity { get; private set; }
     public Vector3 LocalVelocity { get; private set; }
@@ -263,6 +270,15 @@ public class Plane : MonoBehaviour {
         aerodynamics = new Aerodynamics();
 
         Rigidbody.inertiaTensor = inertiaTensor * poundFootToNewtonMeter;
+
+        int gForceTableCount = 2 * (int)elevatorRange + 1;
+        gForceTable = new List<float>(gForceTableCount);
+        gForceTableMin = -(int)elevatorRange;
+        gForceTableMax = (int)elevatorRange;
+
+        for (int i = 0; i < gForceTableCount; i++) {
+            gForceTable.Add(0);
+        }
     }
 
     public void SetThrottleInput(float input) {
@@ -371,11 +387,13 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateThrust(float dt) {
-        engine.Throttle = Throttle;
+        engine.ThrottleCommand = Throttle;
         engine.Mach = Mach;
         engine.Altitude = AltitudeFeet;
 
         engine.Update(dt);
+        EnginePowerCommand = engine.PowerCommand;
+        EnginePowerOutput = engine.PowerOutput;
 
         Rigidbody.AddRelativeForce(new Vector3(0, 0, engine.Thrust * poundsForceToNewtons));
     }
@@ -389,7 +407,7 @@ public class Plane : MonoBehaviour {
 
             rollController.min = -aileronRange;
             rollController.max = aileronRange;
-            pitchController.min = -elevatorRange;
+            pitchController.min = -elevatorRange * gForceInputMin;
             pitchController.max = elevatorRange;
             yawController.min = -rudderRange;
             yawController.max = rudderRange;
@@ -417,6 +435,40 @@ public class Plane : MonoBehaviour {
             ControlSurfaces.y / rudderRange,
             ControlSurfaces.z / aileronRange
         );
+    }
+
+    float CalculateGForce(float alpha, float elevator, float effectiveGravity) {
+        float force = -aerodynamics.EstimateGForceX(airData, alpha, elevator) * poundsForceToNewtons;
+        float accel = force / Rigidbody.mass / Physics.gravity.magnitude;
+        return accel + effectiveGravity;
+    }
+
+    void CalculateGLimiter(float alpha, Vector3 up) {
+        Vector3 planeUp = Rigidbody.rotation * up;
+        float effectiveGravity = Vector3.Dot(planeUp, Vector3.up);
+
+        int indexMin = 0;
+        int indexMiddle = -gForceTableMin;
+        int indexMax = gForceTable.Count;
+
+        for (int i = gForceTableMin; i <= gForceTableMax; i++) {
+            int index = i - gForceTableMin;
+            gForceTable[index] = CalculateGForce(alpha, i, effectiveGravity);
+        }
+
+        gForceInputMin = 1;
+        gForceInputMax = 1;
+
+        for (int i = indexMiddle + 1; i < indexMax; i++) {
+            float g = gForceTable[i];
+
+            if (g > gLimitPitch) {
+                float t = Mathf.InverseLerp(gForceTable[i - 1], g, gLimitPitch);
+                float maxDeflection = i - indexMiddle - 1 + t;
+                gForceInputMin = Mathf.Abs(maxDeflection / elevatorRange);
+                break;
+            }
+        }
     }
 
     void UpdateAerodynamics(float alpha, float beta) {
@@ -618,6 +670,7 @@ public class Plane : MonoBehaviour {
 
             //apply updates
             UpdateThrust(dt);
+            CalculateGLimiter(alpha, Vector3.up);
             UpdateControls(dt);
             UpdateAerodynamics(alpha, beta);
         }

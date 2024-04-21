@@ -13,9 +13,19 @@ public class Engine {
     float currentPower;
 
     /// <summary>
-    /// Throttle of the engine in normalized percent [0, 1]
+    /// Commanded throttle of the engine in normalized percent [0, 1]
     /// </summary>
-    public float Throttle { get; set; }
+    public float ThrottleCommand { get; set; }
+
+    /// <summary>
+    /// Power command of the engine in normalized percent [0, 1]
+    /// </summary>
+    public float PowerCommand { get; set; }
+
+    /// <summary>
+    /// Power output by the engine in normalized percent [0, 1]
+    /// </summary>
+    public float PowerOutput { get; set; }
 
     /// <summary>
     /// Altitude in feet
@@ -62,26 +72,41 @@ public class Engine {
     }
 
     public void Update(float dt) {
-        targetPower = CalculateThrottleGear(Throttle);
+        targetPower = CalculateThrottleGear(ThrottleCommand);
         float powerChangeRate = CalculatePowerRateOfChange(currentPower, targetPower);
         currentPower = Utilities.MoveTo(currentPower, targetPower, Mathf.Abs(powerChangeRate), dt, 0, 100);
+
+        PowerCommand = targetPower;
+        PowerOutput = currentPower;
 
         Thrust = CalculateThrust(currentPower, Altitude, Mach);
     }
 
-    internal float CalculateThrottleGear(float throttle) {
+    public static float CalculateThrottleGear(float throttle) {
         // maps throttle 0 - 0.77   to power 0% - 50%
         // maps throttle 0.77 - 1.0 to power 50% - 100%
 
-        float throttleGear;
+        float power;
 
         if (throttle <= militaryPowerThrottle) {
-            throttleGear = 64.94f * throttle;
+            power = 64.94f * throttle;
         } else {
-            throttleGear = 217.38f * throttle - 117.38f;
+            power = 217.38f * throttle - 117.38f;
         }
 
-        return throttleGear;
+        return power;
+    }
+
+    public static float InvertThrottleGear(float power) {
+        float throttle;
+
+        if (power <= 50.0f) {
+            throttle = power / 64.94f;
+        } else {
+            throttle = (power + 117.38f) / 217.38f;
+        }
+
+        return throttle;
     }
 
     float CalculatePowerRateOfChange(float actualPower, float commandPower) {

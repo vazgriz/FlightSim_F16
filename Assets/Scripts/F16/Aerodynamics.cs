@@ -163,6 +163,11 @@ public class Aerodynamics {
         }
     }
 
+    public float EstimateGForceX(AirData airData, float alpha, float elevator) {
+        float QS = airData.qBar * wingAreaFtSquared;
+        return QS * GetZAxisForce(alpha, 0, elevator);
+    }
+
     public AerodynamicForces CalculateAerodynamics(AerodynamicState currentState) {
         AerodynamicForces result = new AerodynamicForces();
 
