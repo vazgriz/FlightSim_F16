@@ -515,10 +515,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showForces: 0
   showMoment: 0
-  mass: 2324.5
-  inertiaTensor: {x: 55, y: 0, z: 0}
+  mass: 9298
+  inertiaTensor: {x: 55814, y: 63100, z: 9496}
   altitude: 0
-  speed: 0
+  speed: 250
+  runTrimmer: 1
+  trimmerSimTimeStep: 0.25
+  trimmerSimTime: 1
+  trimmerElevator: 0
 --- !u!1 &1921871896528299943
 GameObject:
   m_ObjectHideFlags: 0

@@ -15,7 +15,6 @@ public struct AerodynamicState {
 
 public struct AerodynamicForces {
     public Vector3 force;
-    public Vector3 acceleration;
     public Vector3 moment;
 }
 
@@ -205,7 +204,7 @@ public class Aerodynamics {
         CLT += GetDLDA(currentState.alpha, currentState.beta) * DAIL;
         CLT += GetDLDR(currentState.alpha, currentState.beta) * DRDR;
         float CMT = momentCoefficient.y + CQ * dampingTable[6];// + CZT * ();
-        float CNT = momentCoefficient.z + B2V * (dampingTable[7] * R + dampingTable[8] * P);// + CYT * ()
+        float CNT = momentCoefficient.z + B2V * -(dampingTable[7] * R + dampingTable[8] * P);// + CYT * ()
         CNT += GetDNDA(currentState.alpha, currentState.beta) * DAIL;
         CNT += GetDNDR(currentState.alpha, currentState.beta) * DRDR;
 
@@ -221,17 +220,11 @@ public class Aerodynamics {
         float VDOT = QS * CYT;
         float WDOT = QS * CZT;
 
-        // acceleration
-        float uAccel = (R * V) - (Q * W);
-        float vAccel = (P * W) - (R * U);
-        float wAccel = (Q * U) - (P * V);
-
         float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
         float YAW = QSB * CNT;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
-        result.acceleration = new Vector3(uAccel, vAccel, wAccel);
         result.moment = new Vector3(ROLL, PITCH, YAW);
 
         return result;

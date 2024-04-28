@@ -1139,7 +1139,6 @@ MonoBehaviour:
   flapsDrag: 0
   flapsRetractSpeed: 0
   forceFactor: 1
-  accelFactor: 0
   enableFCS: 1
   inputLag: 0.05
   aileronRange: 21.5
@@ -1167,6 +1166,8 @@ MonoBehaviour:
     D: 1
     min: 0
     max: 0
+  trimmerTimeStep: 0.25
+  trimmerTime: 10
   dragForward:
     serializedVersion: 2
     m_Curve: []

@@ -8,6 +8,7 @@ public class Plane : MonoBehaviour {
     public const float metersToFeet = 3.28084f;
     public const float feetToMeters = 1.0f / metersToFeet;
     public const float poundFootToNewtonMeter = 1.35582f;
+    public const float kilosToPounds = 2.20462f;
 
     [SerializeField]
     float maxHealth;
@@ -33,8 +34,6 @@ public class Plane : MonoBehaviour {
     float flapsRetractSpeed;
     [SerializeField]
     float forceFactor;
-    [SerializeField]
-    float accelFactor;
 
     [Header("Steering")]
     [SerializeField]
@@ -61,6 +60,12 @@ public class Plane : MonoBehaviour {
     PIDController pitchController;
     [SerializeField]
     PIDController yawController;
+
+    [Header("Trimmer")]
+    [SerializeField]
+    float trimmerTimeStep;
+    [SerializeField]
+    float trimmerTime;
 
     [Header("Drag")]
     [SerializeField]
@@ -147,6 +152,8 @@ public class Plane : MonoBehaviour {
     AirDataComputer airDataComputer;
     Engine engine;
     Aerodynamics aerodynamics;
+    SimpleTrimmer simpleTrimmer;
+
     List<float> gForceTable;
     int gForceTableMin;
     int gForceTableMax;
@@ -206,6 +213,7 @@ public class Plane : MonoBehaviour {
     public Vector3 LocalAngularVelocity { get; private set; }
     public Vector3 RollPitchYaw { get; private set; }
     public float AngleOfAttack { get; private set; }
+    public float PredictedAngleOfAttack { get; private set; }
     public float AngleOfAttackYaw { get; private set; }
     public bool AirbrakeDeployed { get; private set; }
 
@@ -268,6 +276,7 @@ public class Plane : MonoBehaviour {
         airDataComputer = new AirDataComputer();
         engine = new Engine();
         aerodynamics = new Aerodynamics();
+        simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, Rigidbody.mass * kilosToPounds / (-Physics.gravity.y * metersToFeet), inertiaTensor);
 
         Rigidbody.inertiaTensor = inertiaTensor * poundFootToNewtonMeter;
 
@@ -417,6 +426,19 @@ public class Plane : MonoBehaviour {
                 -yawController.Calculate(dt, av.y, targetAV.y),
                 rollController.Calculate(dt, av.z, targetAV.z)
             );
+
+            float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
+            SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(
+                trimmerTimeStep,
+                trimmerTime,
+                LocalVelocity.z * metersToFeet,
+                AltitudeFeet,
+                AngleOfAttack * Mathf.Rad2Deg,
+                target.x,
+                gravityFactor * metersToFeet
+            );
+
+            PredictedAngleOfAttack = Utilities.ConvertAngle360To180(state.alpha);
         } else {
             // set control surface position directly from input
             target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
@@ -494,15 +516,11 @@ public class Plane : MonoBehaviour {
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);
         var aeroForces = newState.force;
-        var aeroAccel = newState.acceleration;
         var aeroMoment = newState.moment;
 
         // aeroForces in pounds
         var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
         Rigidbody.AddRelativeForce(forces * forceFactor);
-
-        var accel = new Vector3(aeroAccel.y, -aeroAccel.z, aeroAccel.x) * feetToMeters;
-        Rigidbody.AddRelativeForce(accel * accelFactor, ForceMode.Acceleration);
 
         var moment = new Vector3(aeroMoment.y, aeroMoment.z, aeroMoment.x) * poundFootToNewtonMeter;
         Rigidbody.AddRelativeTorque(moment);

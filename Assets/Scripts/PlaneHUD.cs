@@ -31,6 +31,8 @@ public class PlaneHUD : MonoBehaviour {
     [SerializeField]
     Text aoaIndicator;
     [SerializeField]
+    Text aoaPredictedIndicator;
+    [SerializeField]
     Text gforceIndicator;
     [SerializeField]
     Text machIndicator;
@@ -173,6 +175,7 @@ public class PlaneHUD : MonoBehaviour {
 
     void UpdateAOA() {
         aoaIndicator.text = string.Format("{0:0.0} AOA", plane.AngleOfAttack * Mathf.Rad2Deg);
+        aoaPredictedIndicator.text = string.Format("{0:0.0} AOA", plane.PredictedAngleOfAttack);
     }
 
     void UpdateGForce() {

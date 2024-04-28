@@ -15,6 +15,14 @@ public class PlaneTest : MonoBehaviour {
     float altitude;
     [SerializeField]
     float speed;
+    [SerializeField]
+    bool runTrimmer;
+    [SerializeField]
+    float trimmerSimTimeStep;
+    [SerializeField]
+    float trimmerSimTime;
+    [SerializeField]
+    float trimmerElevator;
 
     Vector3 rollPitchYaw;
     float alpha;
@@ -24,15 +32,24 @@ public class PlaneTest : MonoBehaviour {
     Aerodynamics aerodynamics;
     Engine engine;
 
+    SimpleTrimmer simpleTrimmer;
+
     void Start() {
         transform = GetComponent<Transform>();
 
         airDataComputer = new AirDataComputer();
         aerodynamics = new Aerodynamics();
         engine = new Engine();
+
+        simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, mass * Plane.kilosToPounds / (-Physics.gravity.y * Plane.metersToFeet), inertiaTensor);
     }
 
     void FixedUpdate() {
+        UpdateForces();
+        UpdateTrimmer();
+    }
+
+    void UpdateForces() {
         var euler = transform.eulerAngles;
         rollPitchYaw = new Vector3(
             Utilities.ConvertAngle360To180(euler.x),
@@ -87,5 +104,19 @@ public class PlaneTest : MonoBehaviour {
             Debug.DrawLine(transform.position, transform.position + (transform.rotation * new Vector3(0, -mo.z, 0)), Color.green);
             Debug.DrawLine(transform.position, transform.position + (transform.rotation * new Vector3(0, 0, mo.x)), Color.blue);
         }
+    }
+
+    void UpdateTrimmer() {
+        if (!runTrimmer) return;
+
+        float dt = trimmerSimTimeStep;
+        float gravity = Vector3.Dot(Physics.gravity, Vector3.down) * Plane.metersToFeet;
+        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, speed, altitude, 0, trimmerElevator, gravity);
+
+        transform.rotation = Quaternion.Euler(state.pitch, 0, 0);
+
+        Quaternion rot = Quaternion.Euler(state.alpha, 0, 0);
+        Vector3 dir = transform.rotation * rot * Vector3.forward;
+        Debug.DrawRay(transform.position, dir * 10, Color.red);
     }
 }
