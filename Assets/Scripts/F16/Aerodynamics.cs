@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 public struct AerodynamicState {
+    public Vector4 inertiaTensor;
     public Vector3 velocity;
     public Vector3 angularVelocity;
     public AirData airData;
@@ -15,7 +16,7 @@ public struct AerodynamicState {
 
 public struct AerodynamicForces {
     public Vector3 force;
-    public Vector3 moment;
+    public Vector3 angularVelocity;
 }
 
 public class Aerodynamics {
@@ -24,6 +25,7 @@ public class Aerodynamics {
     const float CBAR = 11.32f;
     const float XCGR = 0.35f;
     const float XCG = 0.35f;
+    const float HX = 160;
 
     float[,] dampTable;
     float[,] xAxisTable;
@@ -179,6 +181,19 @@ public class Aerodynamics {
             currentState.alpha, currentState.beta, currentState.controlSurfaces.x
         );
 
+        // calculate inertia values
+        float AXX = currentState.inertiaTensor.x;
+        float AYY = currentState.inertiaTensor.y;
+        float AZZ = currentState.inertiaTensor.z;
+        float AXZ = currentState.inertiaTensor.w;
+
+        float AXZS = AXZ * AXZ;
+        float XPQ = AXZ * (AXX - AYY + AZZ);
+        float GAM = AXX * AZZ - AXZS;
+        float XQR = AZZ * (AZZ - AYY) + AXZS;
+        float ZPQ = (AZZ - AYY) * AXX + AXZS;
+        float YPR = AZZ - AXX;
+
         CalculateDampingValues(currentState.alpha);
 
         // P Q R
@@ -204,13 +219,9 @@ public class Aerodynamics {
         CLT += GetDLDA(currentState.alpha, currentState.beta) * DAIL;
         CLT += GetDLDR(currentState.alpha, currentState.beta) * DRDR;
         float CMT = momentCoefficient.y + CQ * dampingTable[6];// + CZT * ();
-        float CNT = momentCoefficient.z + B2V * -(dampingTable[7] * R + dampingTable[8] * P);// + CYT * ()
+        float CNT = momentCoefficient.z + B2V * (dampingTable[7] * R + dampingTable[8] * P);// + CYT * ()
         CNT += GetDNDA(currentState.alpha, currentState.beta) * DAIL;
         CNT += GetDNDR(currentState.alpha, currentState.beta) * DRDR;
-
-        float U = currentState.velocity.x;
-        float V = currentState.velocity.y;
-        float W = currentState.velocity.z;
 
         float QS = currentState.airData.qBar * wingAreaFtSquared;
         float QSB = QS * wingSpanFt;
@@ -223,9 +234,16 @@ public class Aerodynamics {
         float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
         float YAW = QSB * CNT;
+        float PQ = P * Q;
+        float QR = Q * R;
+        float QHX = Q * HX;
+
+        float rollVelocity = ((XPQ * PQ) - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
+        float pitchVelocity = ((YPR * P * R) - (AXZ * (P * P - R * R)) + PITCH - (R * HX)) / AYY;
+        float yawVelocity = ((ZPQ * PQ) - (XPQ * QR) + (AXZ * ROLL) + (AXX * (YAW + QHX))) / GAM;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
-        result.moment = new Vector3(ROLL, PITCH, YAW);
+        result.angularVelocity = new Vector3(rollVelocity, pitchVelocity, yawVelocity);
 
         return result;
     }
@@ -252,7 +270,8 @@ public class Aerodynamics {
     }
 
     float GetXAxisForce(float alpha, float elevator) {
-        return GetElevatorForce(alpha, elevator, xAxisTable);
+        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, xAxisTable, 0, 9, -2, 2);
+        return result;
     }
 
     float GetYAxisForce(float beta, float aileron, float rudder) {
@@ -267,7 +286,8 @@ public class Aerodynamics {
     }
 
     float GetYAxisMoment(float alpha, float elevator) {
-        return GetElevatorForce(alpha, elevator, yMomentTable);
+        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, yMomentTable, 0, 9, -2, 2);
+        return result;
     }
 
     float GetXAxisMoment(float alpha, float beta) {

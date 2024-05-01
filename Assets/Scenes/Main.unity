@@ -1133,12 +1133,11 @@ MonoBehaviour:
   throttleSpeed: 1
   gLimit: 4
   gLimitPitch: 8
-  inertiaTensor: {x: 55814, y: 63100, z: 9496}
+  inertiaTensor: {x: 55814, y: 63100, z: 9496, w: 982}
   flapsLiftPower: 0
   flapsAOABias: 0
   flapsDrag: 0
   flapsRetractSpeed: 0
-  forceFactor: 1
   enableFCS: 1
   inputLag: 0.05
   aileronRange: 21.5
@@ -1147,7 +1146,7 @@ MonoBehaviour:
   aileronSpeed: 80
   elevatorSpeed: 60
   rudderSpeed: 120
-  steeringSpeed: {x: 30, y: 30, z: 180}
+  steeringSpeed: {x: 60, y: 30, z: 180}
   rollController:
     P: 2
     I: 0
@@ -1161,9 +1160,9 @@ MonoBehaviour:
     min: 0
     max: 0
   yawController:
-    P: 5
+    P: 1
     I: 0
-    D: 1
+    D: 0.1
     min: 0
     max: 0
   trimmerTimeStep: 0.25

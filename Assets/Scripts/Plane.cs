@@ -9,6 +9,8 @@ public class Plane : MonoBehaviour {
     public const float feetToMeters = 1.0f / metersToFeet;
     public const float poundFootToNewtonMeter = 1.35582f;
     public const float kilosToPounds = 2.20462f;
+    public const float slugToKilo = 14.5939f;
+    public const float footSquareToMeterSquare = 0.092903f;
 
     [SerializeField]
     float maxHealth;
@@ -21,7 +23,7 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     float gLimitPitch;
     [SerializeField]
-    Vector3 inertiaTensor;
+    Vector4 inertiaTensor;
 
     [Header("Lift")]
     [SerializeField]
@@ -32,8 +34,6 @@ public class Plane : MonoBehaviour {
     float flapsDrag;
     [SerializeField]
     float flapsRetractSpeed;
-    [SerializeField]
-    float forceFactor;
 
     [Header("Steering")]
     [SerializeField]
@@ -278,7 +278,10 @@ public class Plane : MonoBehaviour {
         aerodynamics = new Aerodynamics();
         simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, Rigidbody.mass * kilosToPounds / (-Physics.gravity.y * metersToFeet), inertiaTensor);
 
-        Rigidbody.inertiaTensor = inertiaTensor * poundFootToNewtonMeter;
+        // textbook moment of inertia is in slug-ft^2
+        // need to convert to kg-m^2
+        // 1 lb = 1 slug * 1 G
+        Rigidbody.inertiaTensor = new Vector3(inertiaTensor.x, inertiaTensor.y, inertiaTensor.z) * poundFootToNewtonMeter;
 
         int gForceTableCount = 2 * (int)elevatorRange + 1;
         gForceTable = new List<float>(gForceTableCount);
@@ -371,7 +374,7 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateAirData() {
-        float speed = LocalVelocity.z;  // m/s
+        float speed = Mathf.Max(0, LocalVelocity.z);  // m/s
         float speedFeet = speed * metersToFeet;
         AltitudeFeet = Rigidbody.position.y * metersToFeet;
 
@@ -410,6 +413,13 @@ public class Plane : MonoBehaviour {
     void UpdateControls(float dt) {
         Vector3 target;
 
+        Vector3 maxInput = new Vector3(
+            Mathf.Sign(controlInput.x),
+            Mathf.Sign(controlInput.y),
+            Mathf.Sign(controlInput.z)
+        );
+        Vector3 maxDirect = Vector3.Scale(maxInput, new Vector3(elevatorRange, rudderRange, aileronRange));
+
         if (EnableFCS) {
             Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
             Vector3 targetAV = Vector3.Scale(controlInput, steeringSpeed);
@@ -422,19 +432,20 @@ public class Plane : MonoBehaviour {
             yawController.max = rudderRange;
 
             target = new Vector3(
-                -pitchController.Calculate(dt, av.x, targetAV.x),
-                -yawController.Calculate(dt, av.y, targetAV.y),
-                rollController.Calculate(dt, av.z, targetAV.z)
+                -pitchController.Calculate(dt, av.x, av.x, targetAV.x),
+                -yawController.Calculate(dt, av.y, av.y, targetAV.y),
+                rollController.Calculate(dt, av.z, av.z, targetAV.z)
             );
 
             float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
             SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(
                 trimmerTimeStep,
                 trimmerTime,
-                LocalVelocity.z * metersToFeet,
+                new Vector3(LocalVelocity.z, 0, -LocalVelocity.y) * metersToFeet,
                 AltitudeFeet,
                 AngleOfAttack * Mathf.Rad2Deg,
-                target.x,
+                -LocalAngularVelocity.x * Mathf.Rad2Deg,
+                maxDirect.x,
                 gravityFactor * metersToFeet
             );
 
@@ -494,10 +505,11 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateAerodynamics(float alpha, float beta) {
+        // angular velocity in radians/s
         var lav = new Vector3(
             LocalAngularVelocity.z,
             LocalAngularVelocity.x,
-            -LocalAngularVelocity.y
+            LocalAngularVelocity.y
         );
 
         // AerodynamicState uses aerospace conventions
@@ -505,6 +517,7 @@ public class Plane : MonoBehaviour {
         // Y = right
         // Z = down
         AerodynamicState currentState = new() {
+            inertiaTensor = inertiaTensor,
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
             angularVelocity = lav,
             airData = airData,
@@ -516,14 +529,15 @@ public class Plane : MonoBehaviour {
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);
         var aeroForces = newState.force;
-        var aeroMoment = newState.moment;
+        var aeroAngularVelocity = newState.angularVelocity;
 
         // aeroForces in pounds
         var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
-        Rigidbody.AddRelativeForce(forces * forceFactor);
+        Rigidbody.AddRelativeForce(forces);
 
-        var moment = new Vector3(aeroMoment.y, aeroMoment.z, aeroMoment.x) * poundFootToNewtonMeter;
-        Rigidbody.AddRelativeTorque(moment);
+        // aeroAngularVelocity changes angular velocity directly
+        Vector3 avCorrection = new Vector3(aeroAngularVelocity.y, aeroAngularVelocity.z, aeroAngularVelocity.x) - lav;
+        Rigidbody.AddRelativeTorque(avCorrection, ForceMode.Acceleration);
     }
 
     void UpdateDrag() {

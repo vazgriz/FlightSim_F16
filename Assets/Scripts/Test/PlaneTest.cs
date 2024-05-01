@@ -73,7 +73,7 @@ public class PlaneTest : MonoBehaviour {
 
         var forces = aerodynamics.CalculateAerodynamics(state);
         var aeroForces = forces.force;
-        var aeroMoment = forces.moment;
+        var aeroMoment = forces.angularVelocity;
 
         if (showForces) {
             float m = 1;
@@ -111,7 +111,7 @@ public class PlaneTest : MonoBehaviour {
 
         float dt = trimmerSimTimeStep;
         float gravity = Vector3.Dot(Physics.gravity, Vector3.down) * Plane.metersToFeet;
-        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, speed, altitude, 0, trimmerElevator, gravity);
+        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, new Vector3(speed, 0, 0), altitude, 0, 0, trimmerElevator, gravity);
 
         transform.rotation = Quaternion.Euler(state.pitch, 0, 0);
 

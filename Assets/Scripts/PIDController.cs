@@ -12,10 +12,11 @@ public class PIDController {
     public float min;
     public float max;
 
-    public float Calculate(float dt, float value, float target) {
+    public float Calculate(float dt, float value, float velocity, float target) {
         float result = 0;
         float error = target - value;
         result += error * P;
+        result += -velocity * D;
 
         return Mathf.Clamp(result, min, max);
     }
