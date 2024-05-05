@@ -16,6 +16,7 @@ public class SimpleTrimmer {
         public Vector3 acceleration;
         public float altitude;
         public float alpha;
+        public float maxAlpha;
         public float pitchRate;
         public float pitch;
     }
@@ -91,6 +92,7 @@ public class SimpleTrimmer {
             state.velocity = velNormalized * airspeed;
 
             state.alpha = Mathf.Atan2(velNormalized.z, velNormalized.x) * Mathf.Rad2Deg;
+            state.maxAlpha = Mathf.Max(state.maxAlpha, state.alpha);
 
             time += dt;
         }

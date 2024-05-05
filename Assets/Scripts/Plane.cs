@@ -66,6 +66,8 @@ public class Plane : MonoBehaviour {
     float trimmerTimeStep;
     [SerializeField]
     float trimmerTime;
+    [SerializeField]
+    float aoaLimitMax;
 
     [Header("Drag")]
     [SerializeField]
@@ -283,6 +285,13 @@ public class Plane : MonoBehaviour {
         // 1 lb = 1 slug * 1 G
         Rigidbody.inertiaTensor = new Vector3(inertiaTensor.x, inertiaTensor.y, inertiaTensor.z) * poundFootToNewtonMeter;
 
+        rollController.min = -aileronRange;
+        rollController.max = aileronRange;
+        pitchController.min = -elevatorRange;
+        pitchController.max = elevatorRange;
+        yawController.min = -rudderRange;
+        yawController.max = rudderRange;
+
         int gForceTableCount = 2 * (int)elevatorRange + 1;
         gForceTable = new List<float>(gForceTableCount);
         gForceTableMin = -(int)elevatorRange;
@@ -414,32 +423,20 @@ public class Plane : MonoBehaviour {
         Vector3 target;
 
         Vector3 maxInput = new Vector3(-1, 0, 0);
-        Vector3 maxAV = Vector3.Scale(maxInput, new Vector3(elevatorRange, rudderRange, aileronRange));
+        Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed);
 
         if (EnableFCS) {
             Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
-            Vector3 targetAV = Vector3.Scale(controlInput, steeringSpeed);
-
-            rollController.min = -aileronRange;
-            rollController.max = aileronRange;
-            pitchController.min = -elevatorRange;
-            pitchController.max = elevatorRange;
-            yawController.min = -rudderRange;
-            yawController.max = rudderRange;
-
-            target = new Vector3(
-                -pitchController.Calculate(dt, av.x, av.x, targetAV.x),
-                -yawController.Calculate(dt, av.y, av.y, targetAV.y),
-                rollController.Calculate(dt, av.z, av.z, targetAV.z)
-            );
+            Vector3 idealTargetAV = Vector3.Scale(controlInput, steeringSpeed);
 
             float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
             SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
                 velocity = new Vector3(LocalVelocity.z, 0, -LocalVelocity.y) * metersToFeet,
                 altitude = AltitudeFeet,
-                //alpha = AngleOfAttack * Mathf.Rad2Deg,
-                //pitchRate = av.x * Mathf.Deg2Rad,
+                alpha = AngleOfAttack * Mathf.Rad2Deg,
+                pitchRate = LocalAngularVelocity.x
             };
+
             SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(
                 trimmerTimeStep,
                 trimmerTime,
@@ -449,7 +446,31 @@ public class Plane : MonoBehaviour {
                 pitchController
             );
 
-            PredictedAngleOfAttack = Utilities.ConvertAngle360To180(state.alpha);
+            float predictedAlpha = state.maxAlpha;
+            PredictedAngleOfAttack = Utilities.ConvertAngle360To180(predictedAlpha);
+
+            float aoaPitchMult = 1.0f;
+            float gPitchMult = 1.0f;
+
+            if (aoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > aoaLimitMax) {
+                aoaPitchMult *= aoaLimitMax / predictedAlpha;
+            }
+
+            float realAOA = AngleOfAttack * Mathf.Rad2Deg;
+            if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
+                aoaPitchMult *= aoaLimitMax / realAOA;
+            }
+
+            float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
+
+            Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, 1));
+            Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
+
+            target = new Vector3(
+                -pitchController.Calculate(dt, av.x, av.x, targetAV.x),
+                -yawController.Calculate(dt, av.y, av.y, targetAV.y),
+                rollController.Calculate(dt, av.z, av.z, targetAV.z)
+            );
         } else {
             // set control surface position directly from input
             target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));

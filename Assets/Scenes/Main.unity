@@ -1167,6 +1167,7 @@ MonoBehaviour:
     max: 0
   trimmerTimeStep: 0.25
   trimmerTime: 10
+  aoaLimitMax: 20
   dragForward:
     serializedVersion: 2
     m_Curve: []
