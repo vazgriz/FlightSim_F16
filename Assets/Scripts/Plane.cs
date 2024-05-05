@@ -60,6 +60,10 @@ public class Plane : MonoBehaviour {
     PIDController pitchController;
     [SerializeField]
     PIDController yawController;
+    [SerializeField]
+    AnimationCurve rollPitchFactor;
+    [SerializeField]
+    AnimationCurve rollGainSchedule;
 
     [Header("Trimmer")]
     [SerializeField]
@@ -428,7 +432,8 @@ public class Plane : MonoBehaviour {
 
         if (EnableFCS) {
             Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
-            Vector3 idealTargetAV = Vector3.Scale(controlInput, steeringSpeed);
+
+            rollController.P = rollGainSchedule.Evaluate(Mathf.Max(0, LocalVelocity.z));
 
             float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
             SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
@@ -471,8 +476,9 @@ public class Plane : MonoBehaviour {
             }
 
             float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
+            float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.y));
 
-            Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, 1));
+            Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult));
             Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
 
             target = new Vector3(

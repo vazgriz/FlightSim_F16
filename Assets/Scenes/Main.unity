@@ -1146,9 +1146,9 @@ MonoBehaviour:
   aileronSpeed: 80
   elevatorSpeed: 60
   rudderSpeed: 120
-  steeringSpeed: {x: 60, y: 30, z: 180}
+  steeringSpeed: {x: 60, y: 30, z: 300}
   rollController:
-    P: 2
+    P: 2.5
     I: 0
     D: 0.1
     min: 0
@@ -1165,6 +1165,54 @@ MonoBehaviour:
     D: 0.1
     min: 0
     max: 0
+  rollPitchFactor:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0.25
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 136
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0.75
+      inSlope: -0.33333334
+      outSlope: 0
+      tangentMode: 5
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  rollGainSchedule:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 100
+      value: 10
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 136
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 250
+      value: 2.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 136
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   trimmerTimeStep: 0.25
   trimmerTime: 10
   aoaLimitMax: 20
