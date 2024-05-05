@@ -520,9 +520,17 @@ MonoBehaviour:
   altitude: 0
   speed: 250
   runTrimmer: 1
+  elevatorRange: 25
+  elevatorSpeed: 60
   trimmerSimTimeStep: 0.25
   trimmerSimTime: 1
-  trimmerElevator: 0
+  trimmerPitchRate: 0
+  trimmerPID:
+    P: 5
+    I: 0
+    D: 0.1
+    min: -25
+    max: 25
 --- !u!1 &1921871896528299943
 GameObject:
   m_ObjectHideFlags: 0

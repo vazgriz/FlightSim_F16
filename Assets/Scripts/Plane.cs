@@ -276,7 +276,7 @@ public class Plane : MonoBehaviour {
         airDataComputer = new AirDataComputer();
         engine = new Engine();
         aerodynamics = new Aerodynamics();
-        simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, Rigidbody.mass * kilosToPounds / (-Physics.gravity.y * metersToFeet), inertiaTensor);
+        simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, Rigidbody.mass * kilosToPounds / (-Physics.gravity.y * metersToFeet), inertiaTensor, elevatorRange, elevatorSpeed);
 
         // textbook moment of inertia is in slug-ft^2
         // need to convert to kg-m^2
@@ -413,12 +413,8 @@ public class Plane : MonoBehaviour {
     void UpdateControls(float dt) {
         Vector3 target;
 
-        Vector3 maxInput = new Vector3(
-            Mathf.Sign(controlInput.x),
-            Mathf.Sign(controlInput.y),
-            Mathf.Sign(controlInput.z)
-        );
-        Vector3 maxDirect = Vector3.Scale(maxInput, new Vector3(elevatorRange, rudderRange, aileronRange));
+        Vector3 maxInput = new Vector3(-1, 0, 0);
+        Vector3 maxAV = Vector3.Scale(maxInput, new Vector3(elevatorRange, rudderRange, aileronRange));
 
         if (EnableFCS) {
             Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
@@ -426,7 +422,7 @@ public class Plane : MonoBehaviour {
 
             rollController.min = -aileronRange;
             rollController.max = aileronRange;
-            pitchController.min = -elevatorRange * gForceInputMin;
+            pitchController.min = -elevatorRange;
             pitchController.max = elevatorRange;
             yawController.min = -rudderRange;
             yawController.max = rudderRange;
@@ -438,15 +434,19 @@ public class Plane : MonoBehaviour {
             );
 
             float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
+            SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
+                velocity = new Vector3(LocalVelocity.z, 0, -LocalVelocity.y) * metersToFeet,
+                altitude = AltitudeFeet,
+                //alpha = AngleOfAttack * Mathf.Rad2Deg,
+                //pitchRate = av.x * Mathf.Deg2Rad,
+            };
             SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(
                 trimmerTimeStep,
                 trimmerTime,
-                new Vector3(LocalVelocity.z, 0, -LocalVelocity.y) * metersToFeet,
-                AltitudeFeet,
-                AngleOfAttack * Mathf.Rad2Deg,
-                -LocalAngularVelocity.x * Mathf.Rad2Deg,
-                maxDirect.x,
-                gravityFactor * metersToFeet
+                initialState,
+                maxAV.x * Mathf.Deg2Rad,
+                gravityFactor * metersToFeet,
+                pitchController
             );
 
             PredictedAngleOfAttack = Utilities.ConvertAngle360To180(state.alpha);
@@ -516,7 +516,7 @@ public class Plane : MonoBehaviour {
         // X = forward
         // Y = right
         // Z = down
-        AerodynamicState currentState = new() {
+        AerodynamicState currentState = new AerodynamicState {
             inertiaTensor = inertiaTensor,
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
             angularVelocity = lav,

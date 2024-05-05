@@ -18,11 +18,17 @@ public class PlaneTest : MonoBehaviour {
     [SerializeField]
     bool runTrimmer;
     [SerializeField]
+    float elevatorRange;
+    [SerializeField]
+    float elevatorSpeed;
+    [SerializeField]
     float trimmerSimTimeStep;
     [SerializeField]
     float trimmerSimTime;
     [SerializeField]
-    float trimmerElevator;
+    float trimmerPitchRate;
+    [SerializeField]
+    PIDController trimmerPID;
 
     Vector3 rollPitchYaw;
     float alpha;
@@ -41,7 +47,7 @@ public class PlaneTest : MonoBehaviour {
         aerodynamics = new Aerodynamics();
         engine = new Engine();
 
-        simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, mass * Plane.kilosToPounds / (-Physics.gravity.y * Plane.metersToFeet), inertiaTensor);
+        simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, mass * Plane.kilosToPounds / (-Physics.gravity.y * Plane.metersToFeet), inertiaTensor, elevatorRange, elevatorSpeed);
     }
 
     void FixedUpdate() {
@@ -111,9 +117,12 @@ public class PlaneTest : MonoBehaviour {
 
         float dt = trimmerSimTimeStep;
         float gravity = Vector3.Dot(Physics.gravity, Vector3.down) * Plane.metersToFeet;
-        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, new Vector3(speed, 0, 0), altitude, 0, 0, trimmerElevator, gravity);
+        SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
+            velocity = new Vector3(speed, 0, 0),
+            alpha = 0,
+        };
 
-        transform.rotation = Quaternion.Euler(state.pitch, 0, 0);
+        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, initialState, trimmerPitchRate * Mathf.Deg2Rad, gravity, trimmerPID);
 
         Quaternion rot = Quaternion.Euler(state.alpha, 0, 0);
         Vector3 dir = transform.rotation * rot * Vector3.forward;

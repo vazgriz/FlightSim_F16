@@ -264,13 +264,8 @@ public class Aerodynamics {
         );
     }
 
-    float GetElevatorForce(float alpha, float elevator, float[,] table) {
-        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, table, 0, 9, -2, 2);
-        return result;
-    }
-
     float GetXAxisForce(float alpha, float elevator) {
-        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, xAxisTable, 0, 9, -2, 2);
+        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, xAxisTable, -2, 9, -2, 2);
         return result;
     }
 
@@ -286,41 +281,41 @@ public class Aerodynamics {
     }
 
     float GetYAxisMoment(float alpha, float elevator) {
-        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, yMomentTable, 0, 9, -2, 2);
+        float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, yMomentTable, -2, 9, -2, 2);
         return result;
     }
 
     float GetXAxisMoment(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 10, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 9, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
     }
 
     float GetZAxisMoment(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, zMomentTable, -2, 10, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, zMomentTable, -2, 9, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
     }
 
     float GetDLDA(float alpha, float beta) {
-        float dlda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldaTable, -2, 10, -3, 3);
+        float dlda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldaTable, -2, 9, -3, 3);
         return dlda;
     }
 
     float GetDLDR(float alpha, float beta) {
-        float dldr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldrTable, -2, 10, -3, 3);
+        float dldr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dldrTable, -2, 9, -3, 3);
         return dldr;
     }
 
     float GetDNDA(float alpha, float beta) {
-        float dnda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dndaTable, -2, 10, -3, 3);
+        float dnda = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dndaTable, -2, 9, -3, 3);
         return dnda;
     }
 
     float GetDNDR(float alpha, float beta) {
-        float dndr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dndrTable, -2, 10, -3, 3);
+        float dndr = Table.BilinearLookup(alpha, 0.2f, beta, 0.1f, dndrTable, -2, 9, -3, 3);
         return dndr;
     }
 }

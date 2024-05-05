@@ -8,6 +8,8 @@ public class SimpleTrimmer {
 
     float mass;
     Vector4 momentOfInertia;
+    float elevatorRange;
+    float elevatorSpeed;
 
     public struct SimulatedState {
         public Vector3 velocity;
@@ -18,23 +20,26 @@ public class SimpleTrimmer {
         public float pitch;
     }
 
-    public SimpleTrimmer(AirDataComputer airDataComputer, Aerodynamics aerodynamics, float mass, Vector4 momentOfInertia) {
+    public SimpleTrimmer(AirDataComputer airDataComputer, Aerodynamics aerodynamics, float mass, Vector4 momentOfInertia, float elevatorRange, float elevatorSpeed) {
         this.airDataComputer = airDataComputer;
         this.aerodynamics = aerodynamics;
 
         this.mass = mass;
         this.momentOfInertia = momentOfInertia;
+        this.elevatorRange = elevatorRange;
+        this.elevatorSpeed = elevatorSpeed;
     }
 
-    public SimulatedState Trim(float dt, float timeMax, Vector3 initialSpeed, float altitude, float initialAlpha, float pitchRate, float elevator, float gravity) {
-        Vector3 velocity = new Vector3(initialSpeed.x, 0, initialSpeed.z);
+    public SimulatedState Trim(float dt, float timeMax, SimulatedState initialState, float pitchRate, float gravity, PIDController pitchController) {
+        Vector3 velocity = new Vector3(initialState.velocity.x, 0, initialState.velocity.z);
         float airspeed = velocity.magnitude;
+        float elevator = 0;
 
         SimulatedState state = new SimulatedState() {
             velocity = velocity,
-            altitude = altitude,
-            alpha = initialAlpha,
-            pitchRate = pitchRate,
+            altitude = initialState.altitude,
+            alpha = initialState.alpha,
+            pitchRate = initialState.pitchRate,
             pitch = 0
         };
 
@@ -45,17 +50,20 @@ public class SimpleTrimmer {
         float time = 0;
 
         while (time < timeMax) {
-            Quaternion rotation = Quaternion.Euler(0, state.pitch, 0);
-            Vector3 localVelocity = rotation * velocity;
+            float currentPitchRate = state.pitchRate * Mathf.Rad2Deg;
+            float targetPitchRate = pitchRate * Mathf.Rad2Deg;
+            float targetElevator = -pitchController.Calculate(dt, currentPitchRate, currentPitchRate, targetPitchRate);
+            elevator = Utilities.MoveTo(elevator, targetElevator, elevatorSpeed, dt, -elevatorRange, elevatorRange);
 
-            AirData airData = airDataComputer.CalculateAirData(airspeed, altitude);
+            AirData airData = airDataComputer.CalculateAirData(airspeed, state.altitude);
             AerodynamicState aeroState = new AerodynamicState() {
                 inertiaTensor = momentOfInertia,
                 airData = airData,
                 alpha = state.alpha,
                 altitude = state.altitude,
-                velocity = localVelocity,
-                controlSurfaces = new Vector3(elevator, 0, 0)
+                velocity = state.velocity,
+                controlSurfaces = new Vector3(elevator, 0, 0),
+                angularVelocity = new Vector3(0, state.pitchRate, 0)
             };
 
             var aeroForces = aerodynamics.CalculateAerodynamics(aeroState);
@@ -69,11 +77,11 @@ public class SimpleTrimmer {
             state.velocity += state.acceleration * dt;
 
             float angularVelocityY = aeroForces.angularVelocity.y;
-            state.pitchRate = angularVelocityY;
-            float pitchDelta = angularVelocityY * dt;
+            state.pitchRate = Mathf.Lerp(state.pitchRate, angularVelocityY, dt);
+            float pitchDelta = state.pitchRate * Mathf.Rad2Deg * dt;
 
             // rotate velocity by pitchDelta
-            Quaternion newRotation = Quaternion.Euler(0, -pitchDelta, 0);
+            Quaternion newRotation = Quaternion.Euler(0, pitchDelta, 0);
             Vector3 newVelocity = newRotation * state.velocity;
             newVelocity.y = 0;
             newVelocity.z += gravity * dt;
