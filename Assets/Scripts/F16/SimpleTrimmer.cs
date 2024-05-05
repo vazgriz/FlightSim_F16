@@ -14,6 +14,7 @@ public class SimpleTrimmer {
     public struct SimulatedState {
         public Vector3 velocity;
         public Vector3 acceleration;
+        public float maxAccelerationZ;
         public float altitude;
         public float alpha;
         public float maxAlpha;
@@ -92,7 +93,9 @@ public class SimpleTrimmer {
             state.velocity = velNormalized * airspeed;
 
             state.alpha = Mathf.Atan2(velNormalized.z, velNormalized.x) * Mathf.Rad2Deg;
+
             state.maxAlpha = Mathf.Max(state.maxAlpha, state.alpha);
+            state.maxAccelerationZ = Mathf.Min(state.maxAccelerationZ, state.acceleration.z);
 
             time += dt;
         }

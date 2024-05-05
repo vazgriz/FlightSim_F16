@@ -35,6 +35,8 @@ public class PlaneHUD : MonoBehaviour {
     [SerializeField]
     Text gforceIndicator;
     [SerializeField]
+    Text gforcePredictedIndicator;
+    [SerializeField]
     Text machIndicator;
     [SerializeField]
     Text altitude;
@@ -181,6 +183,8 @@ public class PlaneHUD : MonoBehaviour {
     void UpdateGForce() {
         var gforce = plane.LocalGForce.y / 9.81f;
         gforceIndicator.text = string.Format("{0:0.0} G", gforce);
+        var gforcePredicted = plane.PredictedLocalGForce.y / 9.81f;
+        gforcePredictedIndicator.text = string.Format("{0:0.0} G", gforcePredicted);
     }
 
     void UpdateMach() {

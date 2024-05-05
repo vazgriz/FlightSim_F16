@@ -212,6 +212,7 @@ public class Plane : MonoBehaviour {
     public Vector3 Velocity { get; private set; }
     public Vector3 LocalVelocity { get; private set; }
     public Vector3 LocalGForce { get; private set; }
+    public Vector3 PredictedLocalGForce { get; private set; }
     public Vector3 LocalAngularVelocity { get; private set; }
     public Vector3 RollPitchYaw { get; private set; }
     public float AngleOfAttack { get; private set; }
@@ -449,6 +450,9 @@ public class Plane : MonoBehaviour {
             float predictedAlpha = state.maxAlpha;
             PredictedAngleOfAttack = Utilities.ConvertAngle360To180(predictedAlpha);
 
+            float predictedG = -state.maxAccelerationZ * feetToMeters;
+            PredictedLocalGForce = new Vector3(0, predictedG, 0);
+
             float aoaPitchMult = 1.0f;
             float gPitchMult = 1.0f;
 
@@ -459,6 +463,11 @@ public class Plane : MonoBehaviour {
             float realAOA = AngleOfAttack * Mathf.Rad2Deg;
             if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
                 aoaPitchMult *= aoaLimitMax / realAOA;
+            }
+
+            float gForce = predictedG / 9.81f;
+            if (gLimitPitch != 0 && gForce > 0 && gForce > gLimitPitch) {
+                gPitchMult *= gLimitPitch / gForce;
             }
 
             float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
