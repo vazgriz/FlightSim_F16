@@ -16,7 +16,7 @@ public struct AerodynamicState {
 
 public struct AerodynamicForces {
     public Vector3 force;
-    public Vector3 angularVelocity;
+    public Vector3 angularAcceleration;
 }
 
 public class Aerodynamics {
@@ -243,7 +243,7 @@ public class Aerodynamics {
         float yawVelocity = ((ZPQ * PQ) - (XPQ * QR) + (AXZ * ROLL) + (AXX * (YAW + QHX))) / GAM;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
-        result.angularVelocity = new Vector3(rollVelocity, pitchVelocity, yawVelocity);
+        result.angularAcceleration = new Vector3(rollVelocity, pitchVelocity, yawVelocity);
 
         return result;
     }

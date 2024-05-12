@@ -143,6 +143,7 @@ public class Plane : MonoBehaviour {
 
     Vector3 lastVelocity;
     PhysicMaterial landingGearDefaultMaterial;
+    Vector3 lastAngularAcceleration;
 
     int missileIndex;
     List<float> missileReloadTimers;
@@ -476,15 +477,17 @@ public class Plane : MonoBehaviour {
             }
 
             float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
-            float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.y));
+            float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.x));
 
             Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult));
             Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
 
+            var accel = lastAngularAcceleration / dt;
+
             target = new Vector3(
-                -pitchController.Calculate(dt, av.x, av.x, targetAV.x),
-                -yawController.Calculate(dt, av.y, av.y, targetAV.y),
-                rollController.Calculate(dt, av.z, av.z, targetAV.z)
+                -pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
+                -yawController.Calculate(dt, av.y, accel.y, targetAV.y),
+                rollController.Calculate(dt, av.z, accel.z, targetAV.z)
             );
         } else {
             // set control surface position directly from input
@@ -565,15 +568,16 @@ public class Plane : MonoBehaviour {
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);
         var aeroForces = newState.force;
-        var aeroAngularVelocity = newState.angularVelocity;
+        var aeroAngularAcceleration = newState.angularAcceleration;
 
         // aeroForces in pounds
         var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
         Rigidbody.AddRelativeForce(forces);
 
         // aeroAngularVelocity changes angular velocity directly
-        Vector3 avCorrection = new Vector3(aeroAngularVelocity.y, aeroAngularVelocity.z, aeroAngularVelocity.x) - lav;
+        Vector3 avCorrection = new Vector3(aeroAngularAcceleration.y, aeroAngularAcceleration.z, aeroAngularAcceleration.x);
         Rigidbody.AddRelativeTorque(avCorrection, ForceMode.Acceleration);
+        lastAngularAcceleration = avCorrection;
     }
 
     void UpdateDrag() {

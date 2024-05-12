@@ -79,7 +79,7 @@ public class PlaneTest : MonoBehaviour {
 
         var forces = aerodynamics.CalculateAerodynamics(state);
         var aeroForces = forces.force;
-        var aeroMoment = forces.angularVelocity;
+        var aeroMoment = forces.angularAcceleration;
 
         if (showForces) {
             float m = 1;

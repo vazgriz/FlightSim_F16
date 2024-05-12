@@ -1146,11 +1146,11 @@ MonoBehaviour:
   aileronSpeed: 80
   elevatorSpeed: 60
   rudderSpeed: 120
-  steeringSpeed: {x: 60, y: 30, z: 300}
+  steeringSpeed: {x: 60, y: 30, z: 360}
   rollController:
     P: 2.5
     I: 0
-    D: 0.1
+    D: 1
     min: 0
     max: 0
   pitchController:
@@ -1179,8 +1179,8 @@ MonoBehaviour:
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
-      value: 0.75
-      inSlope: -0.33333334
+      value: 0.5
+      inSlope: -0.6666667
       outSlope: 0
       tangentMode: 5
       weightedMode: 0
@@ -1202,8 +1202,8 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 250
-      value: 2.5
+      time: 300
+      value: 5
       inSlope: 0
       outSlope: 0
       tangentMode: 136
