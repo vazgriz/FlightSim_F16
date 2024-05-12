@@ -160,12 +160,7 @@ public class Plane : MonoBehaviour {
     Engine engine;
     Aerodynamics aerodynamics;
     SimpleTrimmer simpleTrimmer;
-
-    List<float> gForceTable;
-    int gForceTableMin;
-    int gForceTableMax;
-    float gForceInputMin;
-    float gForceInputMax;
+    Vector3 controlSurfaceTarget;
 
     public bool EnableFCS {
         get {
@@ -297,15 +292,6 @@ public class Plane : MonoBehaviour {
         pitchController.max = elevatorRange;
         yawController.min = -rudderRange;
         yawController.max = rudderRange;
-
-        int gForceTableCount = 2 * (int)elevatorRange + 1;
-        gForceTable = new List<float>(gForceTableCount);
-        gForceTableMin = -(int)elevatorRange;
-        gForceTableMax = (int)elevatorRange;
-
-        for (int i = 0; i < gForceTableCount; i++) {
-            gForceTable.Add(0);
-        }
     }
 
     public void SetThrottleInput(float input) {
@@ -426,8 +412,6 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateControls(float dt) {
-        Vector3 target;
-
         Vector3 maxInput = new Vector3(-1, 0, 0);
         Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed);
 
@@ -484,22 +468,22 @@ public class Plane : MonoBehaviour {
 
             var accel = lastAngularAcceleration / dt;
 
-            target = new Vector3(
+            controlSurfaceTarget = new Vector3(
                 -pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
                 -yawController.Calculate(dt, av.y, accel.y, targetAV.y),
                 rollController.Calculate(dt, av.z, accel.z, targetAV.z)
             );
         } else {
             // set control surface position directly from input
-            target = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
+            controlSurfaceTarget = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
         }
 
         var current = ControlSurfaces;
 
         ControlSurfaces = new Vector3(
-            Utilities.MoveTo(current.x, target.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
-            Utilities.MoveTo(current.y, target.y, rudderSpeed, dt, -rudderRange, rudderRange),
-            Utilities.MoveTo(current.z, target.z, aileronSpeed, dt, -aileronRange, aileronRange)
+            Utilities.MoveTo(current.x, controlSurfaceTarget.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
+            Utilities.MoveTo(current.y, controlSurfaceTarget.y, rudderSpeed,   dt, -rudderRange, rudderRange),
+            Utilities.MoveTo(current.z, controlSurfaceTarget.z, aileronSpeed,  dt, -aileronRange, aileronRange)
         );
 
         ControlSurfacesNormalized = new Vector3(
@@ -507,40 +491,6 @@ public class Plane : MonoBehaviour {
             ControlSurfaces.y / rudderRange,
             ControlSurfaces.z / aileronRange
         );
-    }
-
-    float CalculateGForce(float alpha, float elevator, float effectiveGravity) {
-        float force = -aerodynamics.EstimateGForceX(airData, alpha, elevator) * poundsForceToNewtons;
-        float accel = force / Rigidbody.mass / Physics.gravity.magnitude;
-        return accel + effectiveGravity;
-    }
-
-    void CalculateGLimiter(float alpha, Vector3 up) {
-        Vector3 planeUp = Rigidbody.rotation * up;
-        float effectiveGravity = Vector3.Dot(planeUp, Vector3.up);
-
-        int indexMin = 0;
-        int indexMiddle = -gForceTableMin;
-        int indexMax = gForceTable.Count;
-
-        for (int i = gForceTableMin; i <= gForceTableMax; i++) {
-            int index = i - gForceTableMin;
-            gForceTable[index] = CalculateGForce(alpha, i, effectiveGravity);
-        }
-
-        gForceInputMin = 1;
-        gForceInputMax = 1;
-
-        for (int i = indexMiddle + 1; i < indexMax; i++) {
-            float g = gForceTable[i];
-
-            if (g > gLimitPitch) {
-                float t = Mathf.InverseLerp(gForceTable[i - 1], g, gLimitPitch);
-                float maxDeflection = i - indexMiddle - 1 + t;
-                gForceInputMin = Mathf.Abs(maxDeflection / elevatorRange);
-                break;
-            }
-        }
     }
 
     void UpdateAerodynamics(float alpha, float beta) {
@@ -742,7 +692,6 @@ public class Plane : MonoBehaviour {
 
             //apply updates
             UpdateThrust(dt);
-            CalculateGLimiter(alpha, Vector3.up);
             UpdateControls(dt);
             UpdateAerodynamics(alpha, beta);
         }
