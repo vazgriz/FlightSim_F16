@@ -15,12 +15,17 @@ public class PlayerController : MonoBehaviour {
     PlaneCamera planeCamera;
     //AIController aiController;
 
-    void Start() {
+    void Awake() {
         planeCamera = GetComponent<PlaneCamera>();
-        SetPlane(plane);    //SetPlane if var is set in inspector
     }
 
-    void SetPlane(Plane plane) {
+    void Start() {
+        if (plane != null) {
+            SetPlane(plane);
+        }
+    }
+
+    public void SetPlane(Plane plane) {
         this.plane = plane;
         //aiController = plane.GetComponent<AIController>();
 
