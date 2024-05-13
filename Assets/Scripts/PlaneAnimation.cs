@@ -105,6 +105,8 @@ public class PlaneAnimation : MonoBehaviour {
     void Update() {
         float dt = Time.deltaTime;
 
+        if (plane.Dead) return;
+
         UpdateAfterburners();
         UpdateControlSurfaces(dt);
         UpdateAirbrakes(dt);

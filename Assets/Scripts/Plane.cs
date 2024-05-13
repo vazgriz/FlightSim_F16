@@ -326,7 +326,7 @@ public class Plane : MonoBehaviour {
         cannonFiring = false;
 
         //damageEffect.GetComponent<ParticleSystem>().Pause();
-        //deathEffect.SetActive(true);
+        deathEffect.SetActive(true);
     }
 
     void UpdateThrottle(float dt) {
