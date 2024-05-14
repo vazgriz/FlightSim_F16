@@ -365,4 +365,28 @@ public class PlaneHUD : MonoBehaviour {
             lastUpdateTime = Time.time;
         }
     }
+
+    public void SetEnableFCS(bool value) {
+        if (plane != null) {
+            plane.EnableFCS = value;
+        }
+    }
+
+    public void SetEnableRollControl(bool value) {
+        if (plane != null) {
+            plane.EnableRollControl = value;
+        }
+    }
+
+    public void SetEnablePitchControl(bool value) {
+        if (plane != null) {
+            plane.EnablePitchControl = value;
+        }
+    }
+
+    public void SetEnableYawControl(bool value) {
+        if (plane != null) {
+            plane.EnableYawControl = value;
+        }
+    }
 }

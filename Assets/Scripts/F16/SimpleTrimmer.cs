@@ -82,6 +82,10 @@ public class SimpleTrimmer {
             state.pitchRate = Mathf.Lerp(state.pitchRate, angularVelocityY, dt);
             float pitchDelta = state.pitchRate * Mathf.Rad2Deg * dt;
 
+            if (Mathf.Abs(pitchDelta) > 360f) {
+                break;
+            }
+
             // rotate velocity by pitchDelta
             Quaternion newRotation = Quaternion.Euler(0, pitchDelta, 0);
             Vector3 newVelocity = newRotation * state.velocity;

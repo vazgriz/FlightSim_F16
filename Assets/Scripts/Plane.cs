@@ -162,6 +162,10 @@ public class Plane : MonoBehaviour {
     SimpleTrimmer simpleTrimmer;
     Vector3 controlSurfaceTarget;
 
+    public bool EnableRollControl { get; set; } = true;
+    public bool EnablePitchControl { get; set; } = true;
+    public bool EnableYawControl { get; set; } = true;
+
     public bool EnableFCS {
         get {
             return enableFCS;
@@ -415,68 +419,72 @@ public class Plane : MonoBehaviour {
         Vector3 maxInput = new Vector3(-1, 0, 0);
         Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed);
 
-        if (EnableFCS) {
-            Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
+        // set control surface position directly from input
+        Vector3 directTarget = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
 
-            rollController.P = rollGainSchedule.Evaluate(Mathf.Max(0, LocalVelocity.z));
+        Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
 
-            float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
-            SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
-                velocity = new Vector3(LocalVelocity.z, 0, -LocalVelocity.y) * metersToFeet,
-                altitude = AltitudeFeet,
-                alpha = AngleOfAttack * Mathf.Rad2Deg,
-                pitchRate = LocalAngularVelocity.x
-            };
+        rollController.P = rollGainSchedule.Evaluate(Mathf.Max(0, LocalVelocity.z));
 
-            SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(
-                trimmerTimeStep,
-                trimmerTime,
-                initialState,
-                maxAV.x * Mathf.Deg2Rad,
-                gravityFactor * metersToFeet,
-                pitchController
-            );
+        float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
+        SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
+            velocity = new Vector3(LocalVelocity.z, 0, -LocalVelocity.y) * metersToFeet,
+            altitude = AltitudeFeet,
+            alpha = AngleOfAttack * Mathf.Rad2Deg,
+            pitchRate = LocalAngularVelocity.x
+        };
 
-            float predictedAlpha = state.maxAlpha;
-            PredictedAngleOfAttack = Utilities.ConvertAngle360To180(predictedAlpha);
+        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(
+            trimmerTimeStep,
+            trimmerTime,
+            initialState,
+            maxAV.x * Mathf.Deg2Rad,
+            gravityFactor * metersToFeet,
+            pitchController
+        );
 
-            float predictedG = -state.maxAccelerationZ * feetToMeters;
-            PredictedLocalGForce = new Vector3(0, predictedG, 0);
+        float predictedAlpha = state.maxAlpha;
+        PredictedAngleOfAttack = Utilities.ConvertAngle360To180(predictedAlpha);
 
-            float aoaPitchMult = 1.0f;
-            float gPitchMult = 1.0f;
+        float predictedG = -state.maxAccelerationZ * feetToMeters;
+        PredictedLocalGForce = new Vector3(0, predictedG, 0);
 
-            if (aoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > aoaLimitMax) {
-                aoaPitchMult *= aoaLimitMax / predictedAlpha;
-            }
+        float aoaPitchMult = 1.0f;
+        float gPitchMult = 1.0f;
 
-            float realAOA = AngleOfAttack * Mathf.Rad2Deg;
-            if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
-                aoaPitchMult *= aoaLimitMax / realAOA;
-            }
-
-            float gForce = predictedG / 9.81f;
-            if (gLimitPitch != 0 && gForce > 0 && gForce > gLimitPitch) {
-                gPitchMult *= gLimitPitch / gForce;
-            }
-
-            float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
-            float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.x));
-
-            Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult));
-            Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
-
-            var accel = lastAngularAcceleration / dt;
-
-            controlSurfaceTarget = new Vector3(
-                -pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
-                -yawController.Calculate(dt, av.y, accel.y, targetAV.y),
-                rollController.Calculate(dt, av.z, accel.z, targetAV.z)
-            );
-        } else {
-            // set control surface position directly from input
-            controlSurfaceTarget = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
+        if (aoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > aoaLimitMax) {
+            aoaPitchMult *= aoaLimitMax / predictedAlpha;
         }
+
+        float realAOA = AngleOfAttack * Mathf.Rad2Deg;
+        if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
+            aoaPitchMult *= aoaLimitMax / realAOA;
+        }
+
+        float gForce = predictedG / 9.81f;
+        if (gLimitPitch != 0 && gForce > 0 && gForce > gLimitPitch) {
+            gPitchMult *= gLimitPitch / gForce;
+        }
+
+        float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
+        float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.x));
+
+        Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult));
+        Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
+
+        var accel = lastAngularAcceleration / dt;
+
+        Vector3 fcsTarget = new Vector3(
+            -pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
+            -yawController.Calculate(dt, av.y, accel.y, targetAV.y),
+            rollController.Calculate(dt, av.z, accel.z, targetAV.z)
+        );
+
+        controlSurfaceTarget = new Vector3(
+            (EnableFCS && EnablePitchControl)  ? fcsTarget.x : directTarget.x,
+            (EnableFCS && EnableYawControl) ? fcsTarget.y : directTarget.y,
+            (EnableFCS && EnableRollControl)   ? fcsTarget.z : directTarget.z
+        );
 
         var current = ControlSurfaces;
 
