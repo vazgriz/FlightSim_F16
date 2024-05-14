@@ -70,6 +70,18 @@ public class PlaneHUD : MonoBehaviour {
     float bulletSpeed;
     [SerializeField]
     GameObject aiMessage;
+    [SerializeField]
+    GameObject configMenu;
+    [SerializeField]
+    GameObject helpDialog;
+    [SerializeField]
+    Toggle enableFCS;
+    [SerializeField]
+    Toggle rollControl;
+    [SerializeField]
+    Toggle pitchControl;
+    [SerializeField]
+    Toggle yawControl;
 
     [SerializeField]
     List<Graphic> missileWarningGraphics;
@@ -127,6 +139,11 @@ public class PlaneHUD : MonoBehaviour {
         if (pitchLadder != null) {
             pitchLadder.SetPlane(plane);
         }
+
+        ResetToggle(enableFCS);
+        ResetToggle(rollControl);
+        ResetToggle(pitchControl);
+        ResetToggle(yawControl);
     }
 
     public void SetCamera(Camera camera) {
@@ -150,6 +167,12 @@ public class PlaneHUD : MonoBehaviour {
     public void ToggleHelpDialogs() {
         foreach (var dialog in helpDialogs) {
             dialog.SetActive(!dialog.activeSelf);
+        }
+    }
+
+    void ResetToggle(Toggle toggle) {
+        if (toggle != null) {
+            toggle.isOn = true;
         }
     }
 
@@ -387,6 +410,18 @@ public class PlaneHUD : MonoBehaviour {
     public void SetEnableYawControl(bool value) {
         if (plane != null) {
             plane.EnableYawControl = value;
+        }
+    }
+
+    public void ToggleConfigMenu() {
+        if (configMenu != null) {
+            configMenu.SetActive(!configMenu.activeSelf);
+        }
+    }
+
+    public void ToggleHelpMenu() {
+        if (helpDialog != null) {
+            helpDialog.SetActive(!helpDialog.activeSelf);
         }
     }
 }

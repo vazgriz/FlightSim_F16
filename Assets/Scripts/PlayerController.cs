@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour {
         this.plane = plane;
         //aiController = plane.GetComponent<AIController>();
 
-        if (planeHUD != null) {
+        if (plane != null && planeHUD != null) {
             planeHUD.SetPlane(plane);
             planeHUD.SetCamera(camera);
         }

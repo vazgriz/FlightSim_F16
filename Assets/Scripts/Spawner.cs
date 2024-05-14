@@ -44,6 +44,7 @@ public class Spawner : MonoBehaviour {
 
     void Spawn(Transform spawnPoint) {
         if (activePlane != null) {
+            playerController.SetPlane(null);
             Destroy(activePlane);
         }
 
