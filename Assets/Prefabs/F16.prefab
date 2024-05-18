@@ -464,7 +464,7 @@ MonoBehaviour:
     min: 0
     max: 0
   yawController:
-    P: 1
+    P: 2
     I: 0
     D: 0.1
     min: 0
