@@ -62,6 +62,8 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     AnimationCurve rollPitchFactor;
     [SerializeField]
+    AnimationCurve rollAOAFactor;
+    [SerializeField]
     AnimationCurve rollGainSchedule;
 
     [Header("Trimmer")]
@@ -71,6 +73,12 @@ public class Plane : MonoBehaviour {
     float trimmerTime;
     [SerializeField]
     float aoaLimitMax;
+    [SerializeField]
+    float stickPusherThreshold;
+    [SerializeField]
+    float stickPusherGain;
+    [SerializeField]
+    float stickPusherMax;
 
     [Header("Drag")]
     [SerializeField]
@@ -414,6 +422,44 @@ public class Plane : MonoBehaviour {
         Rigidbody.AddRelativeForce(new Vector3(0, 0, engine.Thrust * poundsForceToNewtons));
     }
 
+    float CalculateAOALimiter(float predictedAlpha) {
+        float aoaPitchMult = 1.0f;
+
+        if (aoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > aoaLimitMax) {
+            aoaPitchMult *= aoaLimitMax / predictedAlpha;
+        }
+
+        float realAOA = AngleOfAttack * Mathf.Rad2Deg;
+        if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
+            aoaPitchMult *= aoaLimitMax / realAOA;
+        }
+
+        return aoaPitchMult;
+    }
+
+    float CalculateAOAPusher() {
+        float bias = 0.0f;
+
+        float aoa = AngleOfAttack * Mathf.Rad2Deg;
+
+        if (aoa > stickPusherThreshold) {
+            bias = Mathf.Min(stickPusherMax, (aoa - stickPusherThreshold) * stickPusherGain);
+        }
+
+        return bias;
+    }
+
+    float CalculateGLimiter(float predictedG) {
+        float gPitchMult = 1.0f;
+
+        float gForce = predictedG / 9.81f;
+        if (gLimitPitch != 0 && gForce > 0 && gForce > gLimitPitch) {
+            gPitchMult *= gLimitPitch / gForce;
+        }
+
+        return gPitchMult;
+    }
+
     void UpdateControls(float dt) {
         Vector3 maxInput = new Vector3(-1, 0, 0);
         Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed);
@@ -448,27 +494,14 @@ public class Plane : MonoBehaviour {
         float predictedG = -state.maxAccelerationZ * feetToMeters;
         PredictedLocalGForce = new Vector3(0, predictedG, 0);
 
-        float aoaPitchMult = 1.0f;
-        float gPitchMult = 1.0f;
-
-        if (aoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > aoaLimitMax) {
-            aoaPitchMult *= aoaLimitMax / predictedAlpha;
-        }
-
-        float realAOA = AngleOfAttack * Mathf.Rad2Deg;
-        if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
-            aoaPitchMult *= aoaLimitMax / realAOA;
-        }
-
-        float gForce = predictedG / 9.81f;
-        if (gLimitPitch != 0 && gForce > 0 && gForce > gLimitPitch) {
-            gPitchMult *= gLimitPitch / gForce;
-        }
+        float aoaPitchMult = CalculateAOALimiter(predictedAlpha);
+        float gPitchMult = CalculateGLimiter(predictedG);
 
         float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
-        float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.x));
+        float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.x)) * rollAOAFactor.Evaluate(AngleOfAttack * Mathf.Rad2Deg);
+        Vector3 stickPusher = new Vector3(CalculateAOAPusher(), 0, 0);
 
-        Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult));
+        Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult)) + stickPusher;
         Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
 
         var accel = lastAngularAcceleration / dt;
@@ -562,45 +595,6 @@ public class Plane : MonoBehaviour {
         var av = LocalAngularVelocity;
         var drag = av.sqrMagnitude * -av.normalized;    //squared, opposite direction of angular velocity
         Rigidbody.AddRelativeTorque(Vector3.Scale(drag, angularDrag), ForceMode.Acceleration);  //ignore rigidbody mass
-    }
-
-    Vector3 CalculateGForce(Vector3 angularVelocity, Vector3 velocity) {
-        //estiamte G Force from angular velocity and velocity
-        //Velocity = AngularVelocity * Radius
-        //G = Velocity^2 / R
-        //G = (Velocity * AngularVelocity * Radius) / Radius
-        //G = Velocity * AngularVelocity
-        //G = V cross A
-        return Vector3.Cross(angularVelocity, velocity);
-    }
-
-    Vector3 CalculateGForceLimit(Vector3 input) {
-        return Utilities.Scale6(input,
-            gLimit, gLimitPitch,    //pitch down, pitch up
-            gLimit, gLimit,         //yaw
-            gLimit, gLimit          //roll
-        ) * 9.81f;
-    }
-
-    float CalculateGLimiter(Vector3 controlInput, Vector3 maxAngularVelocity) {
-        if (controlInput.magnitude < 0.01f) {
-            return 1;
-        }
-
-        //if the player gives input with magnitude less than 1, scale up their input so that magnitude == 1
-        var maxInput = controlInput.normalized;
-
-        var limit = CalculateGForceLimit(maxInput);
-        var maxGForce = CalculateGForce(Vector3.Scale(maxInput, maxAngularVelocity), LocalVelocity);
-
-        if (maxGForce.magnitude > limit.magnitude) {
-            //example:
-            //maxGForce = 16G, limit = 8G
-            //so this is 8 / 16 or 0.5
-            return limit.magnitude / maxGForce.magnitude;
-        }
-
-        return 1;
     }
 
     public void TryFireMissile() {
