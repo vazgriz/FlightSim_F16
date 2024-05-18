@@ -54,6 +54,8 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     Vector3 steeringSpeed;
     [SerializeField]
+    AnimationCurve steeringSpeedCurve;
+    [SerializeField]
     PIDController rollController;
     [SerializeField]
     PIDController pitchController;
@@ -76,7 +78,7 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     float stickPusherThreshold;
     [SerializeField]
-    float stickPusherGain;
+    AnimationCurve stickPusherCurve;
     [SerializeField]
     float stickPusherMax;
 
@@ -443,10 +445,11 @@ public class Plane : MonoBehaviour {
         float aoa = AngleOfAttack * Mathf.Rad2Deg;
 
         if (aoa > stickPusherThreshold) {
-            bias = Mathf.Min(stickPusherMax, (aoa - stickPusherThreshold) * stickPusherGain);
+            float error = aoa - stickPusherThreshold;
+            bias = stickPusherCurve.Evaluate(error);
         }
 
-        return bias;
+        return Mathf.Min(stickPusherMax, bias);
     }
 
     float CalculateGLimiter(float predictedG) {
@@ -461,8 +464,9 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateControls(float dt) {
+        float steeringSpeedFactor = steeringSpeedCurve.Evaluate(Mathf.Abs(LocalVelocity.z));
         Vector3 maxInput = new Vector3(-1, 0, 0);
-        Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed);
+        Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed * steeringSpeedFactor);
 
         // set control surface position directly from input
         Vector3 directTarget = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
@@ -502,7 +506,7 @@ public class Plane : MonoBehaviour {
         Vector3 stickPusher = new Vector3(CalculateAOAPusher(), 0, 0);
 
         Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult)) + stickPusher;
-        Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed);
+        Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed * steeringSpeedFactor);
 
         var accel = lastAngularAcceleration / dt;
 
