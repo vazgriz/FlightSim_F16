@@ -238,12 +238,12 @@ public class Aerodynamics {
         float QR = Q * R;
         float QHX = Q * HX;
 
-        float rollVelocity = ((XPQ * PQ) - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
-        float pitchVelocity = ((YPR * P * R) - (AXZ * (P * P - R * R)) + PITCH - (R * HX)) / AYY;
-        float yawVelocity = ((ZPQ * PQ) - (XPQ * QR) + (AXZ * ROLL) + (AXX * (YAW + QHX))) / GAM;
+        float rollAccel = ((XPQ * PQ) - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
+        float pitchAccel = ((YPR * P * R) - (AXZ * (P * P - R * R)) + PITCH - (R * HX)) / AYY;
+        float yawAccel = ((ZPQ * PQ) - (XPQ * QR) + (AXZ * ROLL) + (AXX * (YAW + QHX))) / GAM;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
-        result.angularAcceleration = new Vector3(rollVelocity, pitchVelocity, yawVelocity);
+        result.angularAcceleration = new Vector3(rollAccel, pitchAccel, yawAccel);
 
         return result;
     }

@@ -437,7 +437,7 @@ MonoBehaviour:
   throttleSpeed: 1
   gLimit: 4
   gLimitPitch: 8
-  inertiaTensor: {x: 55814, y: 63100, z: 9496, w: 982}
+  inertiaTensor: {x: 9496, y: 55814, z: 63100, w: 982}
   flapsLiftPower: 0
   flapsAOABias: 0
   flapsDrag: 0
@@ -464,7 +464,7 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 100
+      time: 75
       value: 1
       inSlope: 0
       outSlope: 0
@@ -476,9 +476,9 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   rollController:
-    P: 2.5
+    P: 2
     I: 0
-    D: 1
+    D: 2
     min: 0
     max: 0
   pitchController:

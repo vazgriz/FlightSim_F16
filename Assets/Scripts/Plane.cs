@@ -297,7 +297,7 @@ public class Plane : MonoBehaviour {
         // textbook moment of inertia is in slug-ft^2
         // need to convert to kg-m^2
         // 1 lb = 1 slug * 1 G
-        Rigidbody.inertiaTensor = new Vector3(inertiaTensor.x, inertiaTensor.y, inertiaTensor.z) * poundFootToNewtonMeter;
+        Rigidbody.inertiaTensor = new Vector3(inertiaTensor.y, inertiaTensor.z, inertiaTensor.x) * poundFootToNewtonMeter;
 
         rollController.min = -aileronRange;
         rollController.max = aileronRange;
