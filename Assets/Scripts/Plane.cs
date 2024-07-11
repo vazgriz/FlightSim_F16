@@ -66,7 +66,9 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     AnimationCurve rollAOAFactor;
     [SerializeField]
-    AnimationCurve rollGainSchedule;
+    AnimationCurve rollPSchedule;
+    [SerializeField]
+    AnimationCurve rollDSchedule;
 
     [Header("Trimmer")]
     [SerializeField]
@@ -74,7 +76,13 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     float trimmerTime;
     [SerializeField]
-    float aoaLimitMax;
+    float predictedAoaLimitMax;
+    [SerializeField]
+    float predictedAoaLimitStrength;
+    [SerializeField]
+    float feedbackAoaLimitMax;
+    [SerializeField]
+    float feedbackAoaLimitStrength;
     [SerializeField]
     float stickPusherThreshold;
     [SerializeField]
@@ -427,13 +435,17 @@ public class Plane : MonoBehaviour {
     float CalculateAOALimiter(float predictedAlpha) {
         float aoaPitchMult = 1.0f;
 
-        if (aoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > aoaLimitMax) {
-            aoaPitchMult *= aoaLimitMax / predictedAlpha;
+        if (predictedAoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > predictedAoaLimitMax) {
+            float error = predictedAlpha - predictedAoaLimitMax;
+            float excess = error * predictedAoaLimitStrength;
+            aoaPitchMult *= predictedAoaLimitMax / (predictedAoaLimitMax + excess);
         }
 
         float realAOA = AngleOfAttack * Mathf.Rad2Deg;
-        if (aoaLimitMax != 0 && realAOA > 0 && realAOA > aoaLimitMax) {
-            aoaPitchMult *= aoaLimitMax / realAOA;
+        if (feedbackAoaLimitMax != 0 && realAOA > 0 && realAOA > feedbackAoaLimitMax) {
+            float error = realAOA - feedbackAoaLimitMax;
+            float excess = error * feedbackAoaLimitStrength;
+            aoaPitchMult *= feedbackAoaLimitMax / (feedbackAoaLimitMax + excess);
         }
 
         return aoaPitchMult;
@@ -473,7 +485,8 @@ public class Plane : MonoBehaviour {
 
         Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
 
-        rollController.P = rollGainSchedule.Evaluate(Mathf.Max(0, LocalVelocity.z));
+        rollController.P = rollPSchedule.Evaluate(Mathf.Max(0, LocalVelocity.z));
+        rollController.D = rollDSchedule.Evaluate(Mathf.Max(0, LocalVelocity.z));
 
         float gravityFactor = Vector3.Dot(Physics.gravity, Rigidbody.rotation * Vector3.down);
         SimpleTrimmer.SimulatedState initialState = new SimpleTrimmer.SimulatedState {
@@ -508,7 +521,7 @@ public class Plane : MonoBehaviour {
         Vector3 limitedInput = Vector3.Scale(controlInput, new Vector3(pitchMult, 1, rollMult)) + stickPusher;
         Vector3 targetAV = Vector3.Scale(limitedInput, steeringSpeed * steeringSpeedFactor);
 
-        var accel = lastAngularAcceleration / dt;
+        var accel = lastAngularAcceleration * Mathf.Rad2Deg * dt;
 
         Vector3 fcsTarget = new Vector3(
             -pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
