@@ -396,7 +396,7 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateAirData() {
-        float speed = Mathf.Max(0, LocalVelocity.z);  // m/s
+        float speed = LocalVelocity.magnitude;  // m/s
         float speedFeet = speed * metersToFeet;
         AltitudeFeet = Rigidbody.position.y * metersToFeet;
 

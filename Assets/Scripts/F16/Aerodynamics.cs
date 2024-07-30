@@ -201,7 +201,7 @@ public class Aerodynamics {
         float Q = currentState.angularVelocity.y;   // pitch rate
         float R = currentState.angularVelocity.z;   // yaw rate
 
-        float airspeed = Mathf.Max(1, currentState.velocity.x);
+        float airspeed = Mathf.Max(1, currentState.velocity.magnitude);
         float TVT = 0.5f / airspeed;
 
         float B2V = wingSpanFt * TVT;
