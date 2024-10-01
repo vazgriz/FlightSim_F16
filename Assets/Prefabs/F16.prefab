@@ -438,6 +438,7 @@ MonoBehaviour:
   gLimit: 4
   gLimitPitch: 8
   inertiaTensor: {x: 9496, y: 55814, z: 63100, w: 982}
+  centerOfGravityFactor: 0.35
   flapsLiftPower: 0
   flapsAOABias: 0
   flapsDrag: 0

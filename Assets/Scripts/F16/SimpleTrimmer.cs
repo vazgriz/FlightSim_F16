@@ -32,7 +32,7 @@ public class SimpleTrimmer {
         this.elevatorSpeed = elevatorSpeed;
     }
 
-    public SimulatedState Trim(float dt, float timeMax, SimulatedState initialState, float pitchRate, float gravity, PIDController pitchController) {
+    public SimulatedState Trim(float dt, float timeMax, SimulatedState initialState, float pitchRate, float gravity, PIDController pitchController, float xcg) {
         Vector3 velocity = new Vector3(initialState.velocity.x, 0, initialState.velocity.z);
         float airspeed = velocity.magnitude;
         float elevator = 0;
@@ -62,6 +62,7 @@ public class SimpleTrimmer {
                 inertiaTensor = momentOfInertia,
                 airData = airData,
                 alpha = state.alpha,
+                xcg = xcg,
                 altitude = state.altitude,
                 velocity = state.velocity,
                 controlSurfaces = new Vector3(elevator, 0, 0),

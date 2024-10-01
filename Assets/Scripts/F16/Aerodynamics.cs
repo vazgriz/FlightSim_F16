@@ -11,6 +11,7 @@ public struct AerodynamicState {
     public float altitude;
     public float alpha;
     public float beta;
+    public float xcg;
     public Vector3 controlSurfaces;
 }
 
@@ -24,7 +25,6 @@ public class Aerodynamics {
     const float wingSpanFt = 30;
     const float CBAR = 11.32f;
     const float XCGR = 0.35f;
-    const float XCG = 0.35f;
     const float HX = 160;
 
     float[,] dampTable;
@@ -218,8 +218,8 @@ public class Aerodynamics {
         float CLT = momentCoefficient.x + B2V * (dampingTable[4] * R + dampingTable[5] * P);
         CLT += GetDLDA(currentState.alpha, currentState.beta) * DAIL;
         CLT += GetDLDR(currentState.alpha, currentState.beta) * DRDR;
-        float CMT = momentCoefficient.y + CQ * dampingTable[6];// + CZT * ();
-        float CNT = momentCoefficient.z + B2V * (dampingTable[7] * R + dampingTable[8] * P);// + CYT * ()
+        float CMT = momentCoefficient.y + CQ * dampingTable[6] + CZT * (XCGR - currentState.xcg);
+        float CNT = momentCoefficient.z + B2V * (dampingTable[7] * R + dampingTable[8] * P) - CYT * (XCGR - currentState.xcg) * CBAR / wingSpanFt;
         CNT += GetDNDA(currentState.alpha, currentState.beta) * DAIL;
         CNT += GetDNDR(currentState.alpha, currentState.beta) * DRDR;
 
@@ -227,7 +227,8 @@ public class Aerodynamics {
         float QSB = QS * wingSpanFt;
 
         // forces
-        float UDOT = QS * CXT;  // Acceleration in original text. Need to calculate force instead of acceleration
+        // Acceleration in original text. Need to calculate force instead of acceleration
+        float UDOT = QS * CXT;
         float VDOT = QS * CYT;
         float WDOT = QS * CZT;
 

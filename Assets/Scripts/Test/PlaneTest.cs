@@ -122,7 +122,7 @@ public class PlaneTest : MonoBehaviour {
             alpha = 0,
         };
 
-        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, initialState, trimmerPitchRate * Mathf.Deg2Rad, gravity, trimmerPID);
+        SimpleTrimmer.SimulatedState state = simpleTrimmer.Trim(dt, trimmerSimTime, initialState, trimmerPitchRate * Mathf.Deg2Rad, gravity, trimmerPID, 0.35f);
 
         Quaternion rot = Quaternion.Euler(state.alpha, 0, 0);
         Vector3 dir = transform.rotation * rot * Vector3.forward;
