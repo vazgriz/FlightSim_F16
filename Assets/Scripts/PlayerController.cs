@@ -13,7 +13,6 @@ public class PlayerController : MonoBehaviour {
 
     Vector3 controlInput;
     PlaneCamera planeCamera;
-    //AIController aiController;
 
     void Awake() {
         planeCamera = GetComponent<PlaneCamera>();
@@ -27,7 +26,6 @@ public class PlayerController : MonoBehaviour {
 
     public void SetPlane(Plane plane) {
         this.plane = plane;
-        //aiController = plane.GetComponent<AIController>();
 
         if (plane != null && planeHUD != null) {
             planeHUD.SetPlane(plane);
@@ -80,35 +78,8 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
-    public void OnFireMissile(InputAction.CallbackContext context) {
-        if (plane == null) return;
-
-        if (context.phase == InputActionPhase.Performed) {
-            plane.TryFireMissile();
-        }
-    }
-
-    public void OnFireCannon(InputAction.CallbackContext context) {
-        if (plane == null) return;
-
-        if (context.phase == InputActionPhase.Started) {
-            plane.SetCannonInput(true);
-        } else if (context.phase == InputActionPhase.Canceled) {
-            plane.SetCannonInput(false);
-        }
-    }
-
-    public void OnToggleAI(InputAction.CallbackContext context) {
-        //if (plane == null) return;
-
-        //if (aiController != null) {
-        //    aiController.enabled = !aiController.enabled;
-        //}
-    }
-
     void Update() {
         if (plane == null) return;
-        //if (aiController.enabled) return;
 
         plane.SetControlInput(controlInput);
     }
