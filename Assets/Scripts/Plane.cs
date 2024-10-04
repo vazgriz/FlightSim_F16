@@ -24,7 +24,7 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     Vector4 inertiaTensor;
     [SerializeField]
-    float centerOfGravityFactor;
+    float centerOfGravityPosition;
 
     [Header("Lift")]
     [SerializeField]
@@ -156,12 +156,12 @@ public class Plane : MonoBehaviour {
         }
     }
 
-    public float CenterOfGravityFactor {
+    public float CenterOfGravityPosition {
         get {
-            return centerOfGravityFactor;
+            return centerOfGravityPosition;
         }
         set {
-            centerOfGravityFactor = value;
+            centerOfGravityPosition = value;
         }
     }
 
@@ -447,7 +447,7 @@ public class Plane : MonoBehaviour {
             maxAV.x * Mathf.Deg2Rad,
             gravityFactor * metersToFeet,
             pitchController,
-            centerOfGravityFactor
+            centerOfGravityPosition
         );
 
         float predictedAlpha = state.maxAlpha;
@@ -515,7 +515,7 @@ public class Plane : MonoBehaviour {
             altitude = AltitudeFeet,
             alpha = alpha,
             beta = beta,
-            xcg = centerOfGravityFactor,
+            xcg = centerOfGravityPosition,
             controlSurfaces = new Vector3(ControlSurfaces.x, ControlSurfaces.y, -ControlSurfaces.z)
         };
 

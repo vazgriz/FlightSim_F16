@@ -438,7 +438,7 @@ MonoBehaviour:
   gLimit: 4
   gLimitPitch: 8
   inertiaTensor: {x: 9496, y: 55814, z: 63100, w: 982}
-  centerOfGravityFactor: 0.35
+  centerOfGravityPosition: 0.35
   flapsLiftPower: 0
   flapsAOABias: 0
   flapsDrag: 0
@@ -590,7 +590,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  trimmerTimeStep: 0.1
+  trimmerTimeStep: 0.05
   trimmerTime: 5
   predictedAoaLimitMax: 22.5
   predictedAoaLimitStrength: 1.5
@@ -672,18 +672,6 @@ MonoBehaviour:
   deathEffect: {fileID: 7180632626739445123}
   flapsDeployed: 1
   initialSpeed: 0
-  hardpoints: []
-  missileReloadTime: 0
-  missileDebounceTime: 0
-  missilePrefab: {fileID: 0}
-  lockRange: 0
-  lockSpeed: 0
-  lockAngle: 0
-  cannonFireRate: 0
-  cannonDebounceTime: 0
-  cannonSpread: 0
-  cannonSpawnPoint: {fileID: 0}
-  bulletPrefab: {fileID: 0}
 --- !u!114 &187514188077544146
 MonoBehaviour:
   m_ObjectHideFlags: 0
