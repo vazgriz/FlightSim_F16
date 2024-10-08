@@ -622,6 +622,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stickPusherMax: 1
+  gLimitStrength: 2
   dragForward:
     serializedVersion: 2
     m_Curve: []

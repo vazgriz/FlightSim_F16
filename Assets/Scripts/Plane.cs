@@ -18,10 +18,6 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     float throttleSpeed;
     [SerializeField]
-    float gLimit;
-    [SerializeField]
-    float gLimitPitch;
-    [SerializeField]
     Vector4 inertiaTensor;
     [SerializeField]
     float centerOfGravityPosition;
@@ -91,6 +87,12 @@ public class Plane : MonoBehaviour {
     AnimationCurve stickPusherCurve;
     [SerializeField]
     float stickPusherMax;
+    [SerializeField]
+    float gLimit;
+    [SerializeField]
+    float gLimitPitch;
+    [SerializeField]
+    float gLimitStrength;
 
     [Header("Drag")]
     [SerializeField]
@@ -408,12 +410,14 @@ public class Plane : MonoBehaviour {
         return Mathf.Min(stickPusherMax, bias);
     }
 
-    float CalculateGLimiter(float predictedG) {
+    float CalculateGLimiter(float predictedG, float gLimit) {
         float gPitchMult = 1.0f;
 
         float gForce = predictedG / 9.81f;
-        if (gLimitPitch != 0 && gForce > 0 && gForce > gLimitPitch) {
-            gPitchMult *= gLimitPitch / gForce;
+        if (gLimit != 0 && gForce > 0 && gForce > gLimit) {
+            float error = gForce - gLimit;
+            error *= gLimitStrength;
+            gPitchMult *= gLimit / (gLimit + error);
         }
 
         return gPitchMult;
@@ -457,7 +461,11 @@ public class Plane : MonoBehaviour {
         PredictedLocalGForce = new Vector3(0, predictedG, 0);
 
         float aoaPitchMult = CalculateAOALimiter(predictedAlpha);
-        float gPitchMult = CalculateGLimiter(predictedG);
+        float gLimit = gLimitPitch;
+        if (controlInput.x > 0) {
+            gLimit = this.gLimit;
+        }
+        float gPitchMult = CalculateGLimiter(predictedG, gLimit);
 
         float pitchMult = Mathf.Min(aoaPitchMult, gPitchMult);
         float rollMult = rollPitchFactor.Evaluate(Mathf.Abs(controlInput.x)) * rollAOAFactor.Evaluate(AngleOfAttack * Mathf.Rad2Deg);
