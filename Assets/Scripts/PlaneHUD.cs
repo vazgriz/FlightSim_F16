@@ -75,6 +75,8 @@ public class PlaneHUD : MonoBehaviour {
     [SerializeField]
     GameObject helpDialog;
     [SerializeField]
+    Toggle enableEngine;
+    [SerializeField]
     Toggle enableFCS;
     [SerializeField]
     Toggle rollControl;
@@ -136,6 +138,7 @@ public class PlaneHUD : MonoBehaviour {
             pitchLadder.SetPlane(plane);
         }
 
+        ResetToggle(enableEngine);
         ResetToggle(enableFCS);
         ResetToggle(rollControl);
         ResetToggle(pitchControl);
@@ -262,6 +265,12 @@ public class PlaneHUD : MonoBehaviour {
             UpdateGForce();
             UpdateMach();
             lastUpdateTime = Time.time;
+        }
+    }
+
+    public void SetEnableEngine(bool value) {
+        if (plane != null) {
+            plane.EngineEnabled = value;
         }
     }
 

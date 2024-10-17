@@ -22,16 +22,6 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     float centerOfGravityPosition;
 
-    [Header("Lift")]
-    [SerializeField]
-    float flapsLiftPower;
-    [SerializeField]
-    float flapsAOABias;
-    [SerializeField]
-    float flapsDrag;
-    [SerializeField]
-    float flapsRetractSpeed;
-
     [Header("Steering")]
     [SerializeField]
     bool enableFCS;
@@ -124,8 +114,6 @@ public class Plane : MonoBehaviour {
     [SerializeField]
     GameObject deathEffect;
     [SerializeField]
-    bool flapsDeployed;
-    [SerializeField]
     float initialSpeed;
 
     new PlaneAnimation animation;
@@ -155,6 +143,15 @@ public class Plane : MonoBehaviour {
         }
         set {
             enableFCS = value;
+        }
+    }
+
+    public bool EngineEnabled {
+        get {
+            return engine.Enabled;
+        }
+        set {
+            engine.Enabled = value;
         }
     }
 
@@ -224,19 +221,6 @@ public class Plane : MonoBehaviour {
 
     public float AltitudeFeet { get; private set; }
 
-    public bool FlapsDeployed {
-        get {
-            return flapsDeployed;
-        }
-        private set {
-            flapsDeployed = value;
-
-            foreach (var lg in landingGear) {
-                lg.enabled = value;
-            }
-        }
-    }
-
     void Start() {
         animation = GetComponent<PlaneAnimation>();
         Rigidbody = GetComponent<Rigidbody>();
@@ -245,14 +229,14 @@ public class Plane : MonoBehaviour {
             landingGearDefaultMaterial = landingGear[0].sharedMaterial;
         }
 
-        FlapsDeployed = flapsDeployed;
-
         Rigidbody.velocity = Rigidbody.rotation * new Vector3(0, 0, initialSpeed);
 
         airDataComputer = new AirDataComputer();
         engine = new Engine();
         aerodynamics = new Aerodynamics();
         simpleTrimmer = new SimpleTrimmer(airDataComputer, aerodynamics, Rigidbody.mass * kilosToPounds / (-Physics.gravity.y * metersToFeet), inertiaTensor, elevatorRange, elevatorSpeed);
+
+        EngineEnabled = true;
 
         // textbook moment of inertia is in slug-ft^2
         // need to convert to kg-m^2
@@ -275,12 +259,6 @@ public class Plane : MonoBehaviour {
     public void SetControlInput(Vector3 input) {
         if (Dead) return;
         controlInput = Vector3.ClampMagnitude(input, 1);
-    }
-
-    public void ToggleFlaps() {
-        if (LocalVelocity.z < flapsRetractSpeed) {
-            FlapsDeployed = !FlapsDeployed;
-        }
     }
 
     public void ApplyDamage(float damage) {
@@ -315,12 +293,6 @@ public class Plane : MonoBehaviour {
                 lg.sharedMaterial = landingGearDefaultMaterial;
             }
         }
-    }
-
-    void UpdateFlaps() {
-        //if (LocalVelocity.z > flapsRetractSpeed) {
-        //    FlapsDeployed = false;
-        //}
     }
 
     void CalculateAngleOfAttack() {
@@ -547,7 +519,6 @@ public class Plane : MonoBehaviour {
         //calculate at start, to capture any changes that happened externally
         CalculateState(dt);
         CalculateGForce(dt);
-        //UpdateFlaps();
 
         //handle user input
         UpdateThrottle(dt);

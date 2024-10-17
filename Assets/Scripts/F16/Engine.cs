@@ -12,6 +12,8 @@ public class Engine {
     float targetPower;
     float currentPower;
 
+    public bool Enabled { get; set; }
+
     /// <summary>
     /// Commanded throttle of the engine in normalized percent [0, 1]
     /// </summary>
@@ -20,12 +22,20 @@ public class Engine {
     /// <summary>
     /// Power command of the engine in normalized percent [0, 1]
     /// </summary>
-    public float PowerCommand { get; set; }
+    public float PowerCommand {
+        get {
+            return targetPower;
+        }
+    }
 
     /// <summary>
     /// Power output by the engine in normalized percent [0, 1]
     /// </summary>
-    public float PowerOutput { get; set; }
+    public float PowerOutput {
+        get {
+            return currentPower;
+        }
+    }
 
     /// <summary>
     /// Altitude in feet
@@ -72,12 +82,15 @@ public class Engine {
     }
 
     public void Update(float dt) {
+        if (!Enabled) {
+            currentPower = 0;
+            Thrust = 0;
+            return;
+        }
+
         targetPower = CalculateThrottleGear(ThrottleCommand);
         float powerChangeRate = CalculatePowerRateOfChange(currentPower, targetPower);
         currentPower = Utilities.MoveTo(currentPower, targetPower, Mathf.Abs(powerChangeRate), dt, 0, 100);
-
-        PowerCommand = targetPower;
-        PowerOutput = currentPower;
 
         Thrust = CalculateThrust(currentPower, Altitude, Mach);
     }

@@ -96,12 +96,6 @@ public class PlaneAnimation : MonoBehaviour {
         airbrakePosition = Utilities.MoveTo(airbrakePosition, target, deflectionSpeed, dt);
     }
 
-    void UpdateFlaps(float dt) {
-        var target = plane.FlapsDeployed ? 1 : 0;
-
-        flapsPosition = Utilities.MoveTo(flapsPosition, target, deflectionSpeed, dt);
-    }
-
     void Update() {
         float dt = Time.deltaTime;
 
@@ -110,6 +104,5 @@ public class PlaneAnimation : MonoBehaviour {
         UpdateAfterburners();
         UpdateControlSurfaces(dt);
         UpdateAirbrakes(dt);
-        UpdateFlaps(dt);
     }
 }
