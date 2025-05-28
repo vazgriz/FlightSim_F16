@@ -435,19 +435,13 @@ MonoBehaviour:
   maxHealth: 100
   health: 100
   throttleSpeed: 1
-  gLimit: 4
-  gLimitPitch: 8
   inertiaTensor: {x: 9496, y: 55814, z: 63100, w: 982}
   centerOfGravityPosition: 0.35
-  flapsLiftPower: 0
-  flapsAOABias: 0
-  flapsDrag: 0
-  flapsRetractSpeed: 0
   enableFCS: 1
   inputLag: 0.05
   aileronRange: 21.5
   elevatorRange: 25
-  rudderRange: 60
+  rudderRange: 30
   aileronSpeed: 80
   elevatorSpeed: 60
   rudderSpeed: 120
@@ -622,6 +616,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stickPusherMax: 1
+  gLimit: 4
+  gLimitPitch: 8
   gLimitStrength: 2
   dragForward:
     serializedVersion: 2
@@ -671,7 +667,6 @@ MonoBehaviour:
   - {fileID: 4482593638631049769}
   damageEffect: {fileID: 0}
   deathEffect: {fileID: 7180632626739445123}
-  flapsDeployed: 1
   initialSpeed: 0
 --- !u!114 &187514188077544146
 MonoBehaviour:
