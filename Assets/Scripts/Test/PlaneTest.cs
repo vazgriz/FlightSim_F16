@@ -74,7 +74,7 @@ public class PlaneTest : MonoBehaviour {
             altitude = altitude,
             alpha = alpha,
             beta = rollPitchYaw.y,
-            controlSurfaces = new Vector3(0, 0, 0)
+            controlSurfaces = new ControlSurfaces(0, 0, 0)
         };
 
         var forces = aerodynamics.CalculateAerodynamics(state);

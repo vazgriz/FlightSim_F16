@@ -164,8 +164,8 @@ public class Plane : MonoBehaviour {
         }
     }
 
-    public Vector3 ControlSurfaces { get; private set; }
-    public Vector3 ControlSurfacesNormalized { get; private set; }
+    public ControlSurfaces ControlSurfaces { get; private set; }
+    public ControlSurfaces ControlSurfacesNormalized { get; private set; }
 
     public float MaxHealth {
         get {
@@ -462,16 +462,16 @@ public class Plane : MonoBehaviour {
 
         var current = ControlSurfaces;
 
-        ControlSurfaces = new Vector3(
-            Utilities.MoveTo(current.x, controlSurfaceTarget.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
-            Utilities.MoveTo(current.y, controlSurfaceTarget.y, rudderSpeed,   dt, -rudderRange, rudderRange),
-            Utilities.MoveTo(current.z, controlSurfaceTarget.z, aileronSpeed,  dt, -aileronRange, aileronRange)
+        ControlSurfaces = new ControlSurfaces(
+            Utilities.MoveTo(current.elevator, controlSurfaceTarget.x, elevatorSpeed, dt, -elevatorRange, elevatorRange),
+            Utilities.MoveTo(current.rudder,   controlSurfaceTarget.y, rudderSpeed,   dt, -rudderRange, rudderRange),
+            Utilities.MoveTo(current.aileron,  controlSurfaceTarget.z, aileronSpeed,  dt, -aileronRange, aileronRange)
         );
 
-        ControlSurfacesNormalized = new Vector3(
-            ControlSurfaces.x / elevatorRange,
-            ControlSurfaces.y / rudderRange,
-            ControlSurfaces.z / aileronRange
+        ControlSurfacesNormalized = new ControlSurfaces(
+            ControlSurfaces.elevator / elevatorRange,
+            ControlSurfaces.rudder   / rudderRange,
+            ControlSurfaces.aileron  / aileronRange
         );
     }
 
@@ -496,7 +496,7 @@ public class Plane : MonoBehaviour {
             alpha = alpha,
             beta = beta,
             xcg = centerOfGravityPosition,
-            controlSurfaces = new Vector3(ControlSurfaces.x, ControlSurfaces.y, -ControlSurfaces.z)
+            controlSurfaces = new ControlSurfaces(ControlSurfaces.elevator, ControlSurfaces.rudder, -ControlSurfaces.aileron)
         };
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);

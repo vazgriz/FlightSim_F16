@@ -17,8 +17,9 @@ public class PlaneAnimation : MonoBehaviour {
             animationHash = Animator.StringToHash(name);
         }
 
-        public void Update(Animator animator, Vector3 surfaces) {
-            Vector3 mix = Vector3.Scale(influence, surfaces);
+        public void Update(Animator animator, ControlSurfaces surfaces) {
+            Vector3 s = new Vector3(surfaces.elevator, surfaces.rudder, surfaces.aileron);
+            Vector3 mix = Vector3.Scale(influence, s);
             float value = mix.x + mix.y + mix.z;
             float t = Mathf.InverseLerp(min, max, value);
             animator.SetFloat(animationHash, t);

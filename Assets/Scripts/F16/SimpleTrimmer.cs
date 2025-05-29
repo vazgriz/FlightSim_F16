@@ -65,7 +65,7 @@ public class SimpleTrimmer {
                 xcg = xcg,
                 altitude = state.altitude,
                 velocity = state.velocity,
-                controlSurfaces = new Vector3(elevator, 0, 0),
+                controlSurfaces = new ControlSurfaces(elevator, 0, 0),
                 angularVelocity = new Vector3(0, state.pitchRate, 0)
             };
 

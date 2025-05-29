@@ -1,7 +1,18 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
+
+public struct ControlSurfaces {
+    public float elevator;
+    public float rudder;
+    public float aileron;
+
+    public ControlSurfaces(float elevator, float rudder, float aileron) {
+        this.elevator = elevator;
+        this.rudder = rudder;
+        this.aileron = aileron;
+    }
+}
 
 public struct AerodynamicState {
     public Vector4 inertiaTensor;
@@ -12,7 +23,7 @@ public struct AerodynamicState {
     public float alpha;
     public float beta;
     public float xcg;
-    public Vector3 controlSurfaces;
+    public ControlSurfaces controlSurfaces;
 }
 
 public struct AerodynamicForces {
@@ -166,7 +177,7 @@ public class Aerodynamics {
 
     public float EstimateGForceX(AirData airData, float alpha, float elevator) {
         float QS = airData.qBar * wingAreaFtSquared;
-        return QS * GetZAxisForce(alpha, 0, elevator);
+        return QS * GetZAxisForceCoefficient(alpha, 0, elevator);
     }
 
     public AerodynamicForces CalculateAerodynamics(AerodynamicState currentState) {
@@ -174,11 +185,11 @@ public class Aerodynamics {
 
         Vector3 forceCoefficient = GetForceCoefficient(
             currentState.alpha, currentState.beta,
-            currentState.controlSurfaces.z, currentState.controlSurfaces.y, currentState.controlSurfaces.x
+            currentState.controlSurfaces.aileron, currentState.controlSurfaces.rudder, currentState.controlSurfaces.elevator
         );
 
         Vector3 momentCoefficient = GetMomentCoefficient(
-            currentState.alpha, currentState.beta, currentState.controlSurfaces.x
+            currentState.alpha, currentState.beta, currentState.controlSurfaces.elevator
         );
 
         // calculate inertia values
@@ -207,8 +218,8 @@ public class Aerodynamics {
         float B2V = wingSpanFt * TVT;
         float CQ = CBAR * Q * TVT;
 
-        float DAIL = currentState.controlSurfaces.z / 20.0f;
-        float DRDR = currentState.controlSurfaces.y / 30.0f;
+        float DAIL = currentState.controlSurfaces.aileron / 20.0f;
+        float DRDR = currentState.controlSurfaces.rudder / 30.0f;
 
         // damping
         float CXT = forceCoefficient.x + CQ * dampingTable[0];
@@ -239,9 +250,9 @@ public class Aerodynamics {
         float QR = Q * R;
         float QHX = Q * HX;
 
-        float rollAccel = ((XPQ * PQ) - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
-        float pitchAccel = ((YPR * P * R) - (AXZ * (P * P - R * R)) + PITCH - (R * HX)) / AYY;
-        float yawAccel = ((ZPQ * PQ) - (XPQ * QR) + (AXZ * ROLL) + (AXX * (YAW + QHX))) / GAM;
+        float rollAccel  = ((XPQ * PQ)    - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
+        float pitchAccel = ((YPR * P * R) - (AXZ * (P * P - R * R))   + PITCH - (R * HX))    / AYY;
+        float yawAccel   = ((ZPQ * PQ)    - (XPQ * QR) + (AXZ * ROLL) + (AXX * (YAW + QHX))) / GAM;
 
         result.force = new Vector3(UDOT, VDOT, WDOT);
         result.angularAcceleration = new Vector3(rollAccel, pitchAccel, yawAccel);
@@ -251,49 +262,49 @@ public class Aerodynamics {
 
     Vector3 GetForceCoefficient(float alpha, float beta, float aileron, float rudder, float elevator) {
         return new Vector3(
-            GetXAxisForce(alpha, elevator),
-            GetYAxisForce(beta, aileron, rudder),
-            GetZAxisForce(alpha, beta, elevator)
+            GetXAxisForceCoefficient(alpha, elevator),
+            GetYAxisForceCoefficient(beta, aileron, rudder),
+            GetZAxisForceCoefficient(alpha, beta, elevator)
         );
     }
 
     Vector3 GetMomentCoefficient(float alpha, float beta, float elevator) {
         return new Vector3(
-            GetXAxisMoment(alpha, beta),
-            GetYAxisMoment(alpha, elevator),
-            GetZAxisMoment(alpha, beta)
+            GetXAxisMomentCoefficient(alpha, beta),
+            GetYAxisMomentCoefficient(alpha, elevator),
+            GetZAxisMomentCoefficient(alpha, beta)
         );
     }
 
-    float GetXAxisForce(float alpha, float elevator) {
+    float GetXAxisForceCoefficient(float alpha, float elevator) {
         float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, xAxisTable, -2, 9, -2, 2);
         return result;
     }
 
-    float GetYAxisForce(float beta, float aileron, float rudder) {
+    float GetYAxisForceCoefficient(float beta, float aileron, float rudder) {
         float CY = -0.02f * beta + 0.021f * (aileron / 20.0f) + 0.086f * (rudder / 30.0f);
         return CY;
     }
 
-    float GetZAxisForce(float alpha, float beta, float elevator) {
+    float GetZAxisForceCoefficient(float alpha, float beta, float elevator) {
         float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 10);
         float CZ = S * (1 - Mathf.Pow(beta * Mathf.Deg2Rad, 2)) - 0.19f * (elevator / 25.0f);
         return CZ;
     }
 
-    float GetYAxisMoment(float alpha, float elevator) {
+    float GetYAxisMomentCoefficient(float alpha, float elevator) {
         float result = Table.BilinearLookup(alpha, 0.2f, elevator, 1f / 12f, yMomentTable, -2, 9, -2, 2);
         return result;
     }
 
-    float GetXAxisMoment(float alpha, float beta) {
+    float GetXAxisMomentCoefficient(float alpha, float beta) {
         float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 9, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
     }
 
-    float GetZAxisMoment(float alpha, float beta) {
+    float GetZAxisMomentCoefficient(float alpha, float beta) {
         float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, zMomentTable, -2, 9, 0, 7);
         float CL = DUM * Mathf.Sign(beta);
 
