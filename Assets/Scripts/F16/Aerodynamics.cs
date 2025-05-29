@@ -192,22 +192,9 @@ public class Aerodynamics {
             currentState.alpha, currentState.beta, currentState.controlSurfaces.elevator
         );
 
-        // calculate inertia values
-        float AXX = currentState.inertiaTensor.x;
-        float AYY = currentState.inertiaTensor.y;
-        float AZZ = currentState.inertiaTensor.z;
-        float AXZ = currentState.inertiaTensor.w;
-
-        float AXZS = AXZ * AXZ;
-        float XPQ = AXZ * (AXX - AYY + AZZ);
-        float GAM = AXX * AZZ - AXZS;
-        float XQR = AZZ * (AZZ - AYY) + AXZS;
-        float ZPQ = (AZZ - AYY) * AXX + AXZS;
-        float YPR = AZZ - AXX;
-
         CalculateDampingValues(currentState.alpha);
 
-        // P Q R
+        // calculate variables
         float P = currentState.angularVelocity.x;   // roll rate
         float Q = currentState.angularVelocity.y;   // pitch rate
         float R = currentState.angularVelocity.z;   // yaw rate
@@ -220,6 +207,9 @@ public class Aerodynamics {
 
         float DAIL = currentState.controlSurfaces.aileron / 20.0f;
         float DRDR = currentState.controlSurfaces.rudder / 30.0f;
+
+        float QS = currentState.airData.qBar * wingAreaFtSquared;
+        float QSB = QS * wingSpanFt;
 
         // damping
         float CXT = forceCoefficient.x + CQ * dampingTable[0];
@@ -234,21 +224,32 @@ public class Aerodynamics {
         CNT += GetDNDA(currentState.alpha, currentState.beta) * DAIL;
         CNT += GetDNDR(currentState.alpha, currentState.beta) * DRDR;
 
-        float QS = currentState.airData.qBar * wingAreaFtSquared;
-        float QSB = QS * wingSpanFt;
-
         // forces
         // Acceleration in original text. Need to calculate force instead of acceleration
         float UDOT = QS * CXT;
         float VDOT = QS * CYT;
         float WDOT = QS * CZT;
 
+        // moments
         float ROLL = QSB * CLT;
         float PITCH = QS * CBAR * CMT;
         float YAW = QSB * CNT;
         float PQ = P * Q;
         float QR = Q * R;
         float QHX = Q * HX;
+
+        // calculate inertia values
+        float AXX = currentState.inertiaTensor.x;
+        float AYY = currentState.inertiaTensor.y;
+        float AZZ = currentState.inertiaTensor.z;
+        float AXZ = currentState.inertiaTensor.w;
+
+        float AXZS = AXZ * AXZ;
+        float XPQ = AXZ * (AXX - AYY + AZZ);
+        float GAM = AXX * AZZ - AXZS;
+        float XQR = AZZ * (AZZ - AYY) + AXZS;
+        float ZPQ = (AZZ - AYY) * AXX + AXZS;
+        float YPR = AZZ - AXX;
 
         float rollAccel  = ((XPQ * PQ)    - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
         float pitchAccel = ((YPR * P * R) - (AXZ * (P * P - R * R))   + PITCH - (R * HX))    / AYY;
