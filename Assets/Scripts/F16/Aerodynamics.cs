@@ -19,7 +19,6 @@ public struct AerodynamicState {
     public Vector3 velocity;
     public Vector3 angularVelocity;
     public AirData airData;
-    public float altitude;
     public float alpha;
     public float beta;
     public float xcg;
@@ -248,7 +247,7 @@ public class Aerodynamics {
         float XPQ = AXZ * (AXX - AYY + AZZ);
         float GAM = AXX * AZZ - AXZS;
         float XQR = AZZ * (AZZ - AYY) + AXZS;
-        float ZPQ = (AZZ - AYY) * AXX + AXZS;
+        float ZPQ = (AXX - AYY) * AXX + AXZS;
         float YPR = AZZ - AXX;
 
         float rollAccel  = ((XPQ * PQ)    - (XQR * QR) + (AZZ * ROLL) + (AXZ * (YAW + QHX))) / GAM;
@@ -288,7 +287,7 @@ public class Aerodynamics {
     }
 
     float GetZAxisForceCoefficient(float alpha, float beta, float elevator) {
-        float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 10);
+        float S = Table.LinearLookup(alpha, 0.2f, zAxisTable, -2, 9);
         float CZ = S * (1 - Mathf.Pow(beta * Mathf.Deg2Rad, 2)) - 0.19f * (elevator / 25.0f);
         return CZ;
     }

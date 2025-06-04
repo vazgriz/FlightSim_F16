@@ -71,7 +71,6 @@ public class PlaneTest : MonoBehaviour {
             velocity = new Vector3(speed, 0, 0),
             angularVelocity = new Vector3(0, 0, 0),
             airData = airData,
-            altitude = altitude,
             alpha = alpha,
             beta = rollPitchYaw.y,
             controlSurfaces = new ControlSurfaces(0, 0, 0)

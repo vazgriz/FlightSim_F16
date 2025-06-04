@@ -29,11 +29,14 @@ public class Engine {
     }
 
     /// <summary>
-    /// Power output by the engine in normalized percent [0, 1]
+    /// Power output by the engine in percent [0, 100]
     /// </summary>
     public float PowerOutput {
         get {
             return currentPower;
+        }
+        set {
+            currentPower = value;
         }
     }
 
@@ -122,7 +125,7 @@ public class Engine {
         return throttle;
     }
 
-    float CalculatePowerRateOfChange(float actualPower, float commandPower) {
+    public static float CalculatePowerRateOfChange(float actualPower, float commandPower) {
         // calculates how fast power output should change based on commanded power
         float T;
         float p2;
@@ -150,7 +153,7 @@ public class Engine {
         return pdot;
     }
 
-    float CalculateRTau(float dp) {
+    static float CalculateRTau(float dp) {
         float rTau;
 
         if (dp <= 25.0) {

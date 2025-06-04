@@ -63,7 +63,6 @@ public class SimpleTrimmer {
                 airData = airData,
                 alpha = state.alpha,
                 xcg = xcg,
-                altitude = state.altitude,
                 velocity = state.velocity,
                 controlSurfaces = new ControlSurfaces(elevator, 0, 0),
                 angularVelocity = new Vector3(0, state.pitchRate, 0)

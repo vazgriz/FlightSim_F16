@@ -492,7 +492,6 @@ public class Plane : MonoBehaviour {
             velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
             angularVelocity = lav,
             airData = airData,
-            altitude = AltitudeFeet,
             alpha = alpha,
             beta = beta,
             xcg = centerOfGravityPosition,
