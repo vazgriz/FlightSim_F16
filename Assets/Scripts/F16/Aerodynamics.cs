@@ -298,14 +298,14 @@ public class Aerodynamics {
     }
 
     float GetXAxisMomentCoefficient(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 9, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, xMomentTable, -2, 9, 0, 6);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
     }
 
     float GetZAxisMomentCoefficient(float alpha, float beta) {
-        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, zMomentTable, -2, 9, 0, 7);
+        float DUM = Table.BilinearLookup(alpha, 0.2f, Mathf.Abs(beta), 0.2f, zMomentTable, -2, 9, 0, 6);
         float CL = DUM * Mathf.Sign(beta);
 
         return CL;
