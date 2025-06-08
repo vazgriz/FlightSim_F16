@@ -350,21 +350,23 @@ public class Plane : MonoBehaviour {
         Rigidbody.AddRelativeForce(new Vector3(0, 0, engine.Thrust * poundsForceToNewtons));
     }
 
+    float ApplyLimiter(float value, float limit, float limitStrength) {
+        if (limit <= 0) return 1;
+        if (value < limit) return 1;
+
+        float error = value - limit;
+        error *= limitStrength;
+
+        return limit / (limit + error);
+    }
+
     float CalculateAOALimiter(float predictedAlpha) {
         float aoaPitchMult = 1.0f;
 
-        if (predictedAoaLimitMax != 0 && predictedAlpha > 0 && predictedAlpha > predictedAoaLimitMax) {
-            float error = predictedAlpha - predictedAoaLimitMax;
-            float excess = error * predictedAoaLimitStrength;
-            aoaPitchMult *= predictedAoaLimitMax / (predictedAoaLimitMax + excess);
-        }
+        aoaPitchMult *= ApplyLimiter(predictedAlpha, predictedAoaLimitMax, predictedAoaLimitStrength);
 
         float realAOA = AngleOfAttack * Mathf.Rad2Deg;
-        if (feedbackAoaLimitMax != 0 && realAOA > 0 && realAOA > feedbackAoaLimitMax) {
-            float error = realAOA - feedbackAoaLimitMax;
-            float excess = error * feedbackAoaLimitStrength;
-            aoaPitchMult *= feedbackAoaLimitMax / (feedbackAoaLimitMax + excess);
-        }
+        aoaPitchMult *= ApplyLimiter(realAOA, feedbackAoaLimitMax, feedbackAoaLimitStrength);
 
         return aoaPitchMult;
     }
@@ -383,14 +385,8 @@ public class Plane : MonoBehaviour {
     }
 
     float CalculateGLimiter(float predictedG, float gLimit) {
-        float gPitchMult = 1.0f;
-
         float gForce = predictedG / 9.81f;
-        if (gLimit != 0 && gForce > 0 && gForce > gLimit) {
-            float error = gForce - gLimit;
-            error *= gLimitStrength;
-            gPitchMult *= gLimit / (gLimit + error);
-        }
+        float gPitchMult = ApplyLimiter(gForce, gLimit, gLimitStrength);
 
         return gPitchMult;
     }
@@ -506,7 +502,7 @@ public class Plane : MonoBehaviour {
         var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
         Rigidbody.AddRelativeForce(forces);
 
-        // aeroAngularVelocity changes angular velocity directly
+        // aeroAngularAcceleration changes angular velocity directly
         Vector3 avCorrection = new Vector3(aeroAngularAcceleration.y, aeroAngularAcceleration.z, aeroAngularAcceleration.x);
         Rigidbody.AddRelativeTorque(avCorrection, ForceMode.Acceleration);
         lastAngularAcceleration = avCorrection;
