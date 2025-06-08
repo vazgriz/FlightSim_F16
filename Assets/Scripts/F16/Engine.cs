@@ -177,14 +177,14 @@ public class Engine {
         float m = Mathf.Max(0, rMach);
 
         float thrust;
-        float thrustMilitary = Table.BilinearLookup(a, 0.0001f, m, 5, militaryPowerTable, 0, 6, 0, 6);
+        float thrustMilitary = Table.BilinearLookup(a, 0.0001f, m, 5, militaryPowerTable, 0, 5, 0, 5);
 
         // perform trilinear interpolation
         if (power < 50.0) {
-            float thrustIdle = Table.BilinearLookup(a, 0.0001f, m, 5, idlePowerTable, 0, 6, 0, 6);
+            float thrustIdle = Table.BilinearLookup(a, 0.0001f, m, 5, idlePowerTable, 0, 5, 0, 5);
             thrust = InterpolateThrust(thrustIdle, thrustMilitary, power);
         } else {
-            float thrustMax = Table.BilinearLookup(a, 0.0001f, m, 5, maxPowerTable, 0, 6, 0, 6);
+            float thrustMax = Table.BilinearLookup(a, 0.0001f, m, 5, maxPowerTable, 0, 5, 0, 5);
             thrust = InterpolateThrust(thrustMilitary, thrustMax, power - 50.0f);
         }
 

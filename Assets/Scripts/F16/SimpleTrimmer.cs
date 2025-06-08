@@ -78,8 +78,7 @@ public class SimpleTrimmer {
             state.acceleration = aeroForces.force / mass;
             state.velocity += state.acceleration * dt;
 
-            float angularVelocityY = aeroForces.angularAcceleration.y;
-            state.pitchRate = Mathf.Lerp(state.pitchRate, angularVelocityY, dt);
+            state.pitchRate = state.pitchRate + aeroForces.angularAcceleration.y * dt;
             float pitchDelta = state.pitchRate * Mathf.Rad2Deg * dt;
 
             if (Mathf.Abs(pitchDelta) > 360f) {
