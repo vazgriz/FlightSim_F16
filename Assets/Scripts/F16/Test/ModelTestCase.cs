@@ -51,9 +51,41 @@ public class ModelTestCase {
     const float rDelta = 0.5809759f;
     const float powerDelta = -58.68999f;
 
+    Vector3 CalculateLocalVelocity(float alpha, float beta, float velocity) {
+        return Quaternion.Euler(0, 0, beta * Mathf.Rad2Deg) * Quaternion.Euler(0, -alpha * Mathf.Rad2Deg, 0) * new Vector3(velocity, 0, 0);
+    }
+
+    [Test]
+    public void ModelConvertVector() {
+        Vector3 velocity = new Vector3(1, 2, 3);
+        Vector3 v1 = Plane.ConvertVectorToAerospace(velocity);
+        Vector3 v2 = Plane.ConvertVectorToUnity(v1);
+
+        // check converting to aerospace convention
+        Assert.AreEqual(3, v1.x, 0.01f);
+        Assert.AreEqual(1, v1.y, 0.01f);
+        Assert.AreEqual(-2, v1.z, 0.01f);
+
+        // check converting back to Unity convention
+        Assert.AreEqual(velocity.x, v2.x, 0.01f);
+        Assert.AreEqual(velocity.y, v2.y, 0.01f);
+        Assert.AreEqual(velocity.z, v2.z, 0.01f);
+    }
+
     [Test]
     public void ModelAerodynamicsTest() {
         const float dt = 1 / 60.0f;
+
+        // construct 3D velocity from vt, which is 1D
+        Vector3 localVelocity = CalculateLocalVelocity(alpha, beta, vt);        // local velocity in aerospace convention
+        Vector3 localVelocityUnity = Plane.ConvertVectorToUnity(localVelocity); // local velocity in Unity convention
+        float checkAlpha = Plane.CalculateAlpha(localVelocityUnity);
+        float checkBeta = Plane.CalculateBeta(localVelocityUnity);
+
+        // check that alpha and beta of localVelocity are consistent
+        Assert.AreEqual(alpha, checkAlpha, 0.01f);
+        Assert.AreEqual(beta, checkBeta, 0.01f);
+        Assert.AreEqual(vt, localVelocity.magnitude, 0.01f);
 
         AirDataComputer adc = new AirDataComputer();
         AirData airData = adc.CalculateAirData(vt, altitude);
@@ -72,7 +104,7 @@ public class ModelTestCase {
         AerodynamicState state = new AerodynamicState();
         state.airData = airData;
         state.inertiaTensor = inertiaTensor;
-        state.velocity = new Vector3(0, 0, vt);
+        state.velocity = localVelocity;
         state.alpha = alpha * Mathf.Rad2Deg;
         state.beta = beta * Mathf.Rad2Deg;
         // phi, theta, psi are not inputs
@@ -84,10 +116,6 @@ public class ModelTestCase {
 
         Aerodynamics aero = new Aerodynamics();
         AerodynamicForces forces = aero.CalculateAerodynamics(state);
-
-        // original text uses acceleration, need to calculate forces
-        float vtForce = vtAcceleration * mass;
-        //Assert.AreEqual(vtForce, forces.force.x + thrust, 0.1f);
 
         Assert.AreEqual(pDelta, forces.angularAcceleration.x, 0.1f);
         Assert.AreEqual(qDelta, forces.angularAcceleration.y, 0.1f);
@@ -108,22 +136,26 @@ public class ModelTestCase {
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         };
 
+        // test that indexing is calculated correctly
         for (int i = 0; i < 12; i++) {
             float alpha = -10 + (i * 5);
             float value = Table.LinearLookup(alpha, 0.2f, table, -2, 9);
             Assert.AreEqual(table[i], value, 0.01f);
         }
 
+        // test interpolation
         {
             float value = Table.LinearLookup(27.5f, 0.2f, table, -2, 9);
             Assert.AreEqual((table[7] + table[8]) * 0.5f, value, 0.01f);
         }
 
+        // test extrapolation above max index
         {
             float value = Table.LinearLookup(50, 0.2f, table, -2, 9);
             Assert.AreEqual(Mathf.LerpUnclamped(table[10], table[11], 2), value, 0.01f);
         }
 
+        // test extrapolation below max index
         {
             float value = Table.LinearLookup(-15, 0.2f, table, -2, 9);
             Assert.AreEqual(Mathf.LerpUnclamped(table[1], table[0], 2), value, 0.01f);
@@ -140,6 +172,7 @@ public class ModelTestCase {
              { 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62 }
         };
 
+        // test that indexing is calculated correctly
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 5; j++) {
                 float alpha = -10 + (i * 5);
@@ -149,6 +182,7 @@ public class ModelTestCase {
             }
         }
 
+        // test interpolation
         {
             float alpha = 27.5f;
             float beta = 7.5f;
@@ -159,6 +193,7 @@ public class ModelTestCase {
             Assert.AreEqual(Mathf.LerpUnclamped(v0, v1, 0.5f), value, 0.01f);
         }
 
+        // test extrapolation of X axis
         {
             float alpha = 50;
             float beta = 7.5f;
@@ -169,6 +204,7 @@ public class ModelTestCase {
             Assert.AreEqual(Mathf.LerpUnclamped(v0, v1, 0.5f), value, 0.01f);
         }
 
+        // test extrapolation of Y axis
         {
             float alpha = 27.5f;
             float beta = 15f;

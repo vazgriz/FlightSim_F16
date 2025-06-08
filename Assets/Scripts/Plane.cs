@@ -295,6 +295,22 @@ public class Plane : MonoBehaviour {
         }
     }
 
+    public static Vector3 ConvertVectorToAerospace(Vector3 velocity) {
+        return new Vector3(velocity.z, velocity.x, -velocity.y);
+    }
+
+    public static Vector3 ConvertVectorToUnity(Vector3 velocity) {
+        return new Vector3(velocity.y, -velocity.z, velocity.x);
+    }
+
+    public static float CalculateAlpha(Vector3 localVelocity) {
+        return Mathf.Atan2(-localVelocity.y, localVelocity.z);
+    }
+
+    public static float CalculateBeta(Vector3 localVelocity) {
+        return Mathf.Atan2(localVelocity.x, localVelocity.z);
+    }
+
     void CalculateAngleOfAttack() {
         if (LocalVelocity.sqrMagnitude < 0.1f) {
             AngleOfAttack = 0;
@@ -302,8 +318,8 @@ public class Plane : MonoBehaviour {
             return;
         }
 
-        AngleOfAttack = Mathf.Atan2(-LocalVelocity.y, LocalVelocity.z);
-        AngleOfAttackYaw = Mathf.Atan2(LocalVelocity.x, LocalVelocity.z);
+        AngleOfAttack = CalculateAlpha(LocalVelocity);
+        AngleOfAttackYaw = CalculateBeta(LocalVelocity);
     }
 
     void CalculateGForce(float dt) {
@@ -472,21 +488,14 @@ public class Plane : MonoBehaviour {
     }
 
     void UpdateAerodynamics(float alpha, float beta) {
-        // angular velocity in radians/s
-        var lav = new Vector3(
-            LocalAngularVelocity.z,
-            LocalAngularVelocity.x,
-            LocalAngularVelocity.y
-        );
-
         // AerodynamicState uses aerospace conventions
         // X = forward
         // Y = right
         // Z = down
         AerodynamicState currentState = new AerodynamicState {
             inertiaTensor = inertiaTensor,
-            velocity = new Vector3(LocalVelocity.z, LocalVelocity.x, -LocalVelocity.y) * metersToFeet,
-            angularVelocity = lav,
+            velocity = ConvertVectorToAerospace(LocalVelocity) * metersToFeet,
+            angularVelocity = ConvertVectorToAerospace(LocalAngularVelocity),
             airData = airData,
             alpha = alpha,
             beta = beta,
@@ -499,11 +508,12 @@ public class Plane : MonoBehaviour {
         var aeroAngularAcceleration = newState.angularAcceleration;
 
         // aeroForces in pounds
-        var forces = new Vector3(aeroForces.y, -aeroForces.z, aeroForces.x) * poundsForceToNewtons;
+        var forces = ConvertVectorToUnity(aeroForces) * poundsForceToNewtons;
         Rigidbody.AddRelativeForce(forces);
 
         // aeroAngularAcceleration changes angular velocity directly
-        Vector3 avCorrection = new Vector3(aeroAngularAcceleration.y, aeroAngularAcceleration.z, aeroAngularAcceleration.x);
+        Vector3 avCorrection = ConvertVectorToUnity(aeroAngularAcceleration);
+        avCorrection.y *= -1;   // correct yaw axis
         Rigidbody.AddRelativeTorque(avCorrection, ForceMode.Acceleration);
         lastAngularAcceleration = avCorrection;
     }
