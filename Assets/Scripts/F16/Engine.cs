@@ -153,15 +153,15 @@ public class Engine {
         return pdot;
     }
 
-    static float CalculateRTau(float dp) {
+    static float CalculateRTau(float deltaPower) {
         float rTau;
 
-        if (dp <= 25.0) {
+        if (deltaPower <= 25.0) {
             rTau = 1.0f;
-        } else if (dp >= 50.0) {
+        } else if (deltaPower >= 50.0) {
             rTau = 0.1f;
         } else {
-            rTau = 1.9f - 0.036f * dp;
+            rTau = 1.9f - 0.036f * deltaPower;
         }
 
         return rTau;
