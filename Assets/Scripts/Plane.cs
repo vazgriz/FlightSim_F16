@@ -295,12 +295,22 @@ public class Plane : MonoBehaviour {
         }
     }
 
-    public static Vector3 ConvertVectorToAerospace(Vector3 velocity) {
-        return new Vector3(velocity.z, velocity.x, -velocity.y);
+    public static Vector3 ConvertVectorToAerospace(Vector3 vector) {
+        return new Vector3(vector.z, vector.x, -vector.y);
     }
 
-    public static Vector3 ConvertVectorToUnity(Vector3 velocity) {
-        return new Vector3(velocity.y, -velocity.z, velocity.x);
+    public static Vector3 ConvertVectorToUnity(Vector3 vector) {
+        return new Vector3(vector.y, -vector.z, vector.x);
+    }
+
+    public static Vector3 ConvertAngleToAerospace(Vector3 angle) {
+        // negate when switching handedness
+        return -ConvertVectorToAerospace(angle);
+    }
+
+    public static Vector3 ConvertAngleToUnity(Vector3 angle) {
+        // negate when switching handedness
+        return -ConvertVectorToUnity(angle);
     }
 
     public static float CalculateAlpha(Vector3 localVelocity) {
@@ -413,7 +423,7 @@ public class Plane : MonoBehaviour {
         Vector3 maxAV = Vector3.Scale(maxInput, steeringSpeed * steeringSpeedFactor);
 
         // set control surface position directly from input
-        Vector3 directTarget = Vector3.Scale(controlInput, new Vector3(-elevatorRange, -rudderRange, aileronRange));
+        Vector3 directTarget = Vector3.Scale(controlInput, new Vector3(elevatorRange, -rudderRange, aileronRange));
 
         Vector3 av = LocalAngularVelocity * Mathf.Rad2Deg;
 
@@ -461,7 +471,7 @@ public class Plane : MonoBehaviour {
         var accel = lastAngularAcceleration * Mathf.Rad2Deg * dt;
 
         Vector3 fcsTarget = new Vector3(
-            -pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
+            pitchController.Calculate(dt, av.x, accel.x, targetAV.x),
             -yawController.Calculate(dt, av.y, accel.y, targetAV.y),
             rollController.Calculate(dt, av.z, accel.z, targetAV.z)
         );
@@ -495,12 +505,12 @@ public class Plane : MonoBehaviour {
         AerodynamicState currentState = new AerodynamicState {
             inertiaTensor = inertiaTensor,
             velocity = ConvertVectorToAerospace(LocalVelocity) * metersToFeet,
-            angularVelocity = ConvertVectorToAerospace(LocalAngularVelocity),
+            angularVelocity = ConvertAngleToAerospace(LocalAngularVelocity),
             airData = airData,
             alpha = alpha,
             beta = beta,
             xcg = centerOfGravityPosition,
-            controlSurfaces = new ControlSurfaces(ControlSurfaces.elevator, ControlSurfaces.rudder, -ControlSurfaces.aileron)
+            controlSurfaces = ControlSurfaces
         };
 
         var newState = aerodynamics.CalculateAerodynamics(currentState);
@@ -512,8 +522,7 @@ public class Plane : MonoBehaviour {
         Rigidbody.AddRelativeForce(forces);
 
         // aeroAngularAcceleration changes angular velocity directly
-        Vector3 avCorrection = ConvertVectorToUnity(aeroAngularAcceleration);
-        avCorrection.y *= -1;   // correct yaw axis
+        Vector3 avCorrection = ConvertAngleToUnity(aeroAngularAcceleration);
         Rigidbody.AddRelativeTorque(avCorrection, ForceMode.Acceleration);
         lastAngularAcceleration = avCorrection;
     }
