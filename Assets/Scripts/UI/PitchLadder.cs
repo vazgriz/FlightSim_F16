@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PitchLadder : MonoBehaviour {
     [SerializeField]
+    Canvas canvas;
+    [SerializeField]
     GameObject pitchHorizonPrefab;
     [SerializeField]
     GameObject pitchPositivePrefab;
@@ -27,12 +29,14 @@ public class PitchLadder : MonoBehaviour {
     }
 
     new RectTransform transform;
+    RectTransform canvasTransform;
     List<Bar> bars;
     new Camera camera;
     Transform planeTransform;
 
     void Start() {
         transform = GetComponent<RectTransform>();
+        canvasTransform = canvas.GetComponent<RectTransform>();
         bars = new List<Bar>();
 
         for (int i = -range; i <= range; i++) {
@@ -85,7 +89,8 @@ public class PitchLadder : MonoBehaviour {
     float GetPosition(float angle) {
         float fov = camera.fieldOfView;
 
-        return Utilities.TransformAngle(angle, fov, camera.pixelHeight);
+        // use canvas size to handle UI scaling
+        return Utilities.TransformAngle(angle, fov, canvasTransform.sizeDelta.y);
     }
 
     void LateUpdate() {

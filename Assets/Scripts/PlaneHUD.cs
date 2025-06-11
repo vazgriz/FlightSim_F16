@@ -93,6 +93,8 @@ public class PlaneHUD : MonoBehaviour {
     Transform planeTransform;
     new Camera camera;
     Transform cameraTransform;
+    RectTransform canvasTransform;
+    Canvas canvas;
 
     GameObject hudCenterGO;
     GameObject velocityMarkerGO;
@@ -110,6 +112,9 @@ public class PlaneHUD : MonoBehaviour {
     const float metersToFeet = 3.28084f;
 
     void Start() {
+        canvasTransform = GetComponent<RectTransform>();
+        canvas = GetComponent<Canvas>();
+
         hudCenterGO = hudCenter.gameObject;
         velocityMarkerGO = velocityMarker.gameObject;
         targetBoxGO = targetBox.gameObject;
@@ -223,7 +228,7 @@ public class PlaneHUD : MonoBehaviour {
 
     Vector3 TransformToHUDSpace(Vector3 worldSpace) {
         var screenSpace = camera.WorldToScreenPoint(worldSpace);
-        return screenSpace - new Vector3(camera.pixelWidth / 2, camera.pixelHeight / 2);
+        return (screenSpace - new Vector3(camera.pixelWidth / 2, camera.pixelHeight / 2)) / canvas.scaleFactor;
     }
 
     void UpdateHUDCenter() {

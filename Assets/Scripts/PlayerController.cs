@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour {
 
         planeCamera.SetPlane(plane);
     }
+
     public void OnToggleHelp(InputAction.CallbackContext context) {
         if (plane == null) return;
 
